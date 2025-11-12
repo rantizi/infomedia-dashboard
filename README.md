@@ -34,6 +34,8 @@ Create `.env.local` in the repo root (or copy `.env.example` once it exists) and
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key used by the Next.js client |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secure service-role key for server-side imports/ETL |
 | `SUPABASE_ETL_WEBHOOK_SECRET` | Secret shared with cron/worker to trigger ETL runs |
+| `NEXT_PUBLIC_API_URL` (optional) | Override for the API base URL used by server components |
+| `NEXT_PUBLIC_SITE_URL` (optional) | Alternative base URL fallback when `NEXT_PUBLIC_API_URL` is not set |
 
 Keep secrets out of source control. Extend this list as new integrations (analytics, feature flags, etc.) are added per PRD/architecture.
 
@@ -45,8 +47,8 @@ Run SQL in `supabase/migrations/` (includes enums, tables, indexes, KPI view). A
 ## Running Locally
 ```bash
 pnpm dev
-```  
-in `apps/web/`.
+```
+from the repository root.
 
 - Ensure `.env.local` contains the Supabase URL and anon/service keys (see _Environment Variables_)
 - Login to create initial tenant/membership

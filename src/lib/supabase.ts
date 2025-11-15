@@ -1,5 +1,5 @@
-import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
+import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 /**
  * Create a typed Supabase client for use in client components (browser).
@@ -22,31 +22,30 @@ import type { Database } from './database.types'
  *   const { data, error } = await supabase.from('companies').select('*')
  */
 export function createClient(): SupabaseClient<Database> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url) {
     throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL in environment. ' +
-      'Please set it in your .env.local file (see .env.example).'
-    )
+      "Missing NEXT_PUBLIC_SUPABASE_URL in environment. " + "Please set it in your .env.local file (see .env.example).",
+    );
   }
 
   if (!anonKey) {
     throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in environment. ' +
-      'Please set it in your .env.local file (see .env.example).'
-    )
+      "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in environment. " +
+        "Please set it in your .env.local file (see .env.example).",
+    );
   }
 
   try {
-    return createSupabaseClient<Database>(url, anonKey)
+    return createSupabaseClient<Database>(url, anonKey);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to initialize Supabase client: ${message}. ` +
-      'Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are valid.'
-    )
+        "Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are valid.",
+    );
   }
 }
 
@@ -70,22 +69,21 @@ export function createClient(): SupabaseClient<Database> {
  *   const { data, error } = await supabase.from('companies').select('*')
  */
 export function createServerClient(): SupabaseClient<Database> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url) {
     throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL in environment. ' +
-      'Please set it in your .env.local file (see .env.example).'
-    )
+      "Missing NEXT_PUBLIC_SUPABASE_URL in environment. " + "Please set it in your .env.local file (see .env.example).",
+    );
   }
 
   if (!serviceRole) {
     throw new Error(
-      'Missing SUPABASE_SERVICE_ROLE_KEY in environment. ' +
-      'This key must be set in .env.local (server-only, never expose to client). ' +
-      'See .env.example for details.'
-    )
+      "Missing SUPABASE_SERVICE_ROLE_KEY in environment. " +
+        "This key must be set in .env.local (server-only, never expose to client). " +
+        "See .env.example for details.",
+    );
   }
 
   try {
@@ -94,14 +92,14 @@ export function createServerClient(): SupabaseClient<Database> {
         persistSession: false,
         autoRefreshToken: false,
       },
-    })
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to initialize Supabase server client: ${message}. ` +
-      'Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are valid.'
-    )
+        "Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are valid.",
+    );
   }
 }
 
-export type { SupabaseClient }
+export type { SupabaseClient };

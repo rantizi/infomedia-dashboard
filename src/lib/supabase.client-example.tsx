@@ -1,55 +1,50 @@
-'use client'
+"use client";
 
 /**
  * CLIENT COMPONENT EXAMPLE — Supabase Usage
- * 
+ *
  * This example demonstrates how to use createClient() in a Next.js Client Component
  * (with 'use client' directive at the top).
- * 
+ *
  * Location: src/lib/supabase.client-example.tsx
  * Status: Reference file, do NOT commit to repo.
  */
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
-import type { Database } from '@/lib/database.types'
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
+import type { Database } from "@/lib/database.types";
 
 export default function DashboardPage() {
-  const [companies, setCompanies] = useState<
-    Database['public']['Tables']['companies']['Row'][]
-  >([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [companies, setCompanies] = useState<Database["public"]["Tables"]["companies"]["Row"][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // createClient() is safe here because @/lib/supabase uses only NEXT_PUBLIC_* env vars,
   // which are inlined by Next.js build and available in the browser.
-  const supabase = createClient()
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const { data, error: err } = await supabase
-          .from('companies')
-          .select('*')
-          .limit(10)
+        const { data, error: err } = await supabase.from("companies").select("*").limit(10);
 
         if (err) {
-          setError(err.message)
+          setError(err.message);
         } else {
-          setCompanies(data || [])
+          setCompanies(data || []);
         }
       } catch (e) {
-        setError(String(e))
+        setError(String(e));
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchCompanies()
-  }, [supabase])
+    fetchCompanies();
+  }, [supabase]);
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
@@ -73,5 +68,5 @@ export default function DashboardPage() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }

@@ -9,27 +9,27 @@
  * Matches the route response.
  */
 export interface FunnelStageRow {
-  stage: 'leads' | 'prospect' | 'qualified' | 'submission' | 'win' | 'qualified_lop'
-  value_m: number
-  projects: number
+  stage: "leads" | "prospect" | "qualified" | "submission" | "win" | "qualified_lop";
+  value_m: number;
+  projects: number;
 }
 
 /**
  * Type definition for the full API response.
  */
 export interface FunnelResponse {
-  segment: string
-  stages: FunnelStageRow[]
+  segment: string;
+  stages: FunnelStageRow[];
 }
 
 /**
  * Query parameters for the funnel endpoint.
  */
 export interface FunnelQueryParams {
-  tenant_id: string
-  segment?: string
-  from?: string // ISO datetime
-  to?: string // ISO datetime
+  tenant_id: string;
+  segment?: string;
+  from?: string; // ISO datetime
+  to?: string; // ISO datetime
 }
 
 /**
@@ -50,18 +50,16 @@ export async function getFunnelData(params: FunnelQueryParams): Promise<FunnelRe
     ...(params.segment && { segment: params.segment }),
     ...(params.from && { from: params.from }),
     ...(params.to && { to: params.to }),
-  })
+  });
 
-  const response = await fetch(`/api/funnel-2rows?${searchParams.toString()}`)
+  const response = await fetch(`/api/funnel-2rows?${searchParams.toString()}`);
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(
-      `Funnel API error [${response.status}]: ${error.error} (${error.details || error.message || ''})`
-    )
+    const error = await response.json();
+    throw new Error(`Funnel API error [${response.status}]: ${error.error} (${error.details || error.message || ""})`);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**

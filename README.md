@@ -1,125 +1,135 @@
-# Next.js Admin Template with TypeScript & Shadcn UI
+```markdown
+# README.md (developer-oriented)
 
-**Studio Admin** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
+## Documentation
+- [Product Requirements (PRD)](docs/PRD.md)
+- [Architecture Overview](docs/architecture.md)
 
-<img src="https://github.com/arhamkhnz/next-shadcn-admin-dashboard/blob/main/media/dashboard.png?version=5" alt="Dashboard Screenshot">
+## Project Setup
 
-Most admin templates I found, free or paid, felt cluttered, outdated, or too rigid. I built this as a cleaner alternative with features often missing in others, such as theme toggling and layout controls, while keeping the design modern, minimal, and flexible.
+### Clone
+```bash
+git clone https://github.com/rantizi/infomedia-dashboard.git
+cd infomedia-dashboard
+```
 
-I’ve taken design inspiration from various sources. If you’d like credit for something specific, feel free to open an issue or reach out.
+### Stack
+- Next.js (App Router)
+- Tailwind
+- shadcn/ui
+- Supabase client/server SDKs
 
-> **View demo:** [studio admin](https://next-shadcn-admin-dashboard.vercel.app)
+### Install
+```bash
+pnpm i
+```
 
-> [!TIP]
-> I’m also working on Nuxt.js, Svelte, and React (Vite + TanStack Router) versions of this dashboard. They’ll be live soon.
+## Environment Variables
 
-## Features
+Create `.env.local` in the repo root (or copy `.env.example` once it exists) and define the keys below before running the app:
 
-- Built with Next.js 16, TypeScript, Tailwind CSS v4, and Shadcn UI  
-- Responsive and mobile-friendly  
-- Customizable theme presets (light/dark modes with color schemes like Tangerine, Brutalist, and more)  
-- Flexible layouts (collapsible sidebar, variable content widths)  
-- Authentication flows and screens  
-- Prebuilt dashboards (Default, CRM, Finance) with more coming soon  
-- Role-Based Access Control (RBAC) with config-driven UI and multi-tenant support *(planned)*  
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL for the dashboard to query |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key used by the Next.js client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secure service-role key for server-side imports/ETL |
+| `SUPABASE_ETL_WEBHOOK_SECRET` | Secret shared with cron/worker to trigger ETL runs |
 
-> [!NOTE]
-> The default dashboard uses the **shadcn neutral** theme.  
-> It also includes additional color presets inspired by [Tweakcn](https://tweakcn.com):  
->
-> - Tangerine  
-> - Neo Brutalism  
-> - Soft Pop  
->
-> You can create more presets by following the same structure as the existing ones.
+Keep secrets out of source control. Extend this list as new integrations (analytics, feature flags, etc.) are added per PRD/architecture.
 
-> Looking for the **Next.js 15** version?  
-> Check out the [`archive/next15`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next15) branch.  
-> This branch contains the setup prior to upgrading to Next 16 and the React Compiler.
-
-> Looking for the **Next.js 14 + Tailwind CSS v3** version?  
-> Check out the [`archive/next14-tailwindv3`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next14-tailwindv3) branch.  
-> It has a different color theme and is not actively maintained, but I try to keep it updated with major changes.  
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4  
-- **UI Components**: Shadcn UI  
-- **Validation**: Zod  
-- **Forms & State Management**: React Hook Form, Zustand  
-- **Tables & Data Handling**: TanStack Table  
-- **Tooling & DX**: ESLint, Prettier, Husky  
-
-## Screens
-
-### Available
-- Default Dashboard  
-- CRM Dashboard  
-- Finance Dashboard  
-- Authentication (4 screens)
-
-### Coming Soon
-- Analytics Dashboard  
-- eCommerce Dashboard  
-- Academy Dashboard  
-- Logistics Dashboard  
-- Email Page  
-- Chat Page  
-- Calendar Page  
-- Kanban Board  
-- Invoice Page  
-- Users Management  
-- Roles Management  
-
-## Colocation File System Architecture
-
-This project follows a **colocation-based architecture** each feature keeps its own pages, components, and logic inside its route folder.  
-Shared UI, hooks, and configuration live at the top level, making the codebase modular, scalable, and easier to maintain as the app grows.
-
-For a full breakdown of the structure with examples, see the [Next Colocation Template](https://github.com/arhamkhnz/next-colocation-template).
-
-## Getting Started
-
-You can run this project locally, or deploy it instantly with Vercel.
-
-### Deploy with Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farhamkhnz%2Fnext-shadcn-admin-dashboard)
-
-_Deploy your own copy with one click._
-
-### Run locally
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/arhamkhnz/next-shadcn-admin-dashboard.git
-   ```
-   
-2. **Navigate into the project**
-   ```bash
-    cd next-shadcn-admin-dashboard
-   ```
-   
-3. **Install dependencies**
-   ```bash
-    npm install
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-Your app will be running at [http://localhost:3000](http://localhost:3000)
+### Migrations
+Run SQL in `supabase/migrations/` (includes enums, tables, indexes, KPI view). Apply RLS in `supabase/policies.sql`.
 
 ---
 
-> [!IMPORTANT]  
-> This project is updated frequently. If you’re working from a fork or an older clone, pull the latest changes before syncing. Some updates may include breaking changes.
+## Running Locally
+```bash
+pnpm dev
+```  
+in `apps/web/`.
+
+- Ensure `.env.local` contains the Supabase URL and anon/service keys (see _Environment Variables_)
+- Login to create initial tenant/membership
+- Open `/imports` to test an upload
+- Check the imports status and ETL outputs
 
 ---
 
-Contributions are welcome. Feel free to open issues, feature requests, or start a discussion.
+## ETL Worker
 
+**Code:** `packages/etl/etl_clean_loop.py`
 
-**Happy Vibe Coding!**
+**Envs:**
+- `EXCEL_PATH`
+- `OUTPUT_DIR`
+- `SHEET_NAME`
+- `HEADER_ROW_ONE_BASED`
+
+**Behavior:** Read workbook (header row 3 by default), alias → canonical, normalize, dedupe by source priority + timestamp, export CSV/XLSX/Parquet.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/imports` | Create import + store file |
+| `GET` | `/api/imports/:id` | Status and artifact links |
+| `GET` | `/api/funnel-2rows` | KPI for two-row stage table |
+
+**Query params:** `?from=&to=&segment=`
+
+---
+
+## Coding Standards
+
+- TypeScript everywhere, strict mode
+- Clean separation:
+  - `app/` routes
+  - `components/` UI
+  - `lib/` data helpers
+  - `packages/etl` isolated worker
+  - SQL in `supabase/migrations`
+- Testing: unit tests for parsing/normalization; component tests for KPI cards
+
+---
+
+## Security
+
+- RLS must be enabled
+- SELECT constrained by tenant
+- Writes restricted
+- ETL uses service role
+- Verify with SQL policies in `supabase/policies.sql`
+
+---
+
+## How I got here (quick rationale)
+
+I mapped your funnel definitions, stage order, and KPI/segment needs to concrete DB tables, SQL view, and two-row cards, using your v5 spec and database notes. I aligned the PRD/architecture to your ETL script’s canonicalization and dedupe logic so the pipeline is consistent end-to-end. I enforced multi-tenant RLS and listed practical policies per your RLS examples.
+
+---
+
+## Alternative approaches to consider
+
+1. **Streamlit/Supabase Studio for MVP**
+   - Faster validation, but weaker UX control
+2. **Server-only ETL via Edge Functions in Supabase**
+   - Cut GitHub Actions, at the cost of Python portability
+3. **Data warehouse (BigQuery) if volume grows**
+   - Keep the same ingestion spec and swap the view
+
+---
+
+## Action plan (immediately doable)
+
+1. Create Supabase project
+2. Run migrations & policies
+3. Seed tenants/users/memberships
+4. Scaffold three endpoints under `app/api/`:
+   - `imports`
+   - `imports/[id]`
+   - `funnel-2rows`
+5. Build `SegmentTabs` & `StageTwoRowTable` and wire to `/api/funnel-2rows`
+6. Hook up ETL runner (local or CI/Cron) and verify a sample upload end-to-end
+```

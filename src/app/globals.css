@@ -334,3 +334,62 @@ html {
   justify-content: space-between;
   gap: 0.75rem;
 }
+
+/* Upload experience -------------------------------------------------------- */
+.page-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #020617;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.upload-card {
+  width: 100%;
+  border-radius: 24px;
+  background-color: #ffffff;
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  padding: clamp(2.25rem, 4vw, 3.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.upload-card:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 25px 45px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.upload-card:focus-visible {
+  outline: none;
+  border-color: #020617;
+  box-shadow: 0 0 0 3px rgba(2, 6, 23, 0.08);
+}
+
+.upload-plus {
+  font-size: clamp(2.5rem, 4vw, 3rem);
+  line-height: 1;
+  font-weight: 500;
+  color: #111111;
+}
+
+.upload-note {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.upload-file-name {
+  font-size: 0.95rem;
+  color: #111111;
+}

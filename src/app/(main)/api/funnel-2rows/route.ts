@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { STUB_FUNNEL_DATA } from "./stub-data";
 
 /**
@@ -37,3 +38,4 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 }
+

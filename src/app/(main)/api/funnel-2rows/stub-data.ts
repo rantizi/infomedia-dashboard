@@ -133,3 +133,4 @@ export const STUB_FUNNEL_DATA: Funnel2RowsResponse = {
     },
   },
 };
+

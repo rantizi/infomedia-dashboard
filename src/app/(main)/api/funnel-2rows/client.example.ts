@@ -55,8 +55,12 @@ export async function getFunnelData(params: FunnelQueryParams): Promise<FunnelRe
   const response = await fetch(`/api/funnel-2rows?${searchParams.toString()}`);
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Funnel API error [${response.status}]: ${error.error} (${error.details || error.message || ""})`);
+    const error = await response.json().catch(() => ({ error: "Unknown error" }));
+    const errorMessage =
+      typeof error === "object" && error !== null
+        ? String(error.error || error.message || error.details || "Unknown error")
+        : "Unknown error";
+    throw new Error(`Funnel API error [${response.status}]: ${errorMessage}`);
   }
 
   return response.json();
@@ -111,3 +115,4 @@ export async function getFunnelData(params: FunnelQueryParams): Promise<FunnelRe
 //     </div>
 //   )
 // }
+

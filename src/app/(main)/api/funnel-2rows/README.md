@@ -121,3 +121,4 @@ curl "http://localhost:3000/api/funnel-2rows?segment=Total"
 - [ ] Support multi-segment aggregation in single request
 - [ ] Add response schema validation (Zod output schema)
 - [ ] Structured logging with correlation IDs
+

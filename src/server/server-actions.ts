@@ -59,15 +59,19 @@ async function getTenantFromUserMembership(): Promise<string | null> {
  */
 async function getFirstTenantFromDatabase(): Promise<string | null> {
   // Only in development mode
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV !== "development") {
     return null;
   }
 
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase.from("tenants").select("id").limit(1).single();
 
-    if (error || !data) {
+    if (error) {
+      return null;
+    }
+
+    if (!data) {
       return null;
     }
 
@@ -94,8 +98,7 @@ export async function getActiveTenantId(): Promise<string> {
   const cookieStore = await cookies();
   const tenantFromCookie = cookieStore.get(TENANT_ID_COOKIE)?.value;
   const tenantFromMembership = await getTenantFromUserMembership();
-  const fallbackTenant =
-    process.env.SUPABASE_DEFAULT_TENANT_ID ?? process.env.NEXT_PUBLIC_SUPABASE_DEFAULT_TENANT_ID;
+  const fallbackTenant = process.env.SUPABASE_DEFAULT_TENANT_ID ?? process.env.NEXT_PUBLIC_SUPABASE_DEFAULT_TENANT_ID;
   const firstTenantFromDb = await getFirstTenantFromDatabase();
 
   const tenantId = tenantFromCookie ?? tenantFromMembership ?? fallbackTenant ?? firstTenantFromDb;
@@ -113,4 +116,16 @@ export async function getActiveTenantId(): Promise<string> {
   }
 
   return tenantId;
+}
+
+/**
+ * Sign out the current user and clear their session.
+ * This server action properly clears Supabase auth cookies.
+ * After sign out, redirects to the login page.
+ */
+export async function signOut(): Promise<void> {
+  const supabase = await createServerClient();
+  await supabase.auth.signOut();
+  const { redirect } = await import("next/navigation");
+  redirect("/login");
 }

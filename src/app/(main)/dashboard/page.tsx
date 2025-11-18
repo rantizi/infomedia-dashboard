@@ -41,16 +41,22 @@ const mapStage = (stageLabel: string | null | undefined): FunnelStage | null =>
   STAGE_NAME_MAP[normalize(stageLabel)] ?? null;
 
 const createSegmentRecord = <T,>(factory: () => T): Record<Segment, T> =>
-  SEGMENTS.reduce((acc, segment) => {
-    acc[segment] = factory();
-    return acc;
-  }, {} as Record<Segment, T>);
+  SEGMENTS.reduce(
+    (acc, segment) => {
+      acc[segment] = factory();
+      return acc;
+    },
+    {} as Record<Segment, T>,
+  );
 
 const createEmptyFunnelData = (): Funnel2RowsResponse => {
-  const stages = STAGES.reduce((acc, stage) => {
-    acc[stage] = createSegmentRecord<FunnelCell>(() => ({ valueM: 0, projects: 0 }));
-    return acc;
-  }, {} as Funnel2RowsResponse["stages"]);
+  const stages = STAGES.reduce(
+    (acc, stage) => {
+      acc[stage] = createSegmentRecord<FunnelCell>(() => ({ valueM: 0, projects: 0 }));
+      return acc;
+    },
+    {} as Funnel2RowsResponse["stages"],
+  );
 
   return {
     stages,

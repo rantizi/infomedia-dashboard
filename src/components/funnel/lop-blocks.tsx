@@ -12,6 +12,7 @@
  * - Row 3: % Terhadap STG (percentage vs STG target)
  */
 
+import { formatShortMillion, formatPercentInt } from "@/lib/utils";
 import { Funnel2RowsResponse, Segment, SEGMENT_LABELS } from "@/types/funnel";
 
 interface LopBlocksProps {
@@ -19,28 +20,6 @@ interface LopBlocksProps {
 }
 
 const SEGMENTS: Segment[] = ["TELKOM_GROUP", "SOE", "PRIVATE", "GOV", "SME_REG", "TOTAL"];
-
-/**
- * Format number as Indonesian currency in millions
- * @example formatValueM(51.97) → "51,97 M"
- */
-function formatValueM(value: number): string {
-  return `${value.toLocaleString("id-ID", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} M`;
-}
-
-/**
- * Format percentage
- * @example formatPercent(26.49) → "26,49%"
- */
-function formatPercent(value: number): string {
-  return `${value.toLocaleString("id-ID", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
 
 interface LopBlockProps {
   title: string;
@@ -91,7 +70,7 @@ function LopBlock({ title, data }: LopBlockProps) {
                 className="flex items-center justify-center bg-white/80 px-4 py-3 dark:bg-slate-950/40"
               >
                 <div className="text-base font-semibold text-slate-900 dark:text-slate-50">
-                  {formatValueM(data[segment].valueM)}
+                  {formatShortMillion(data[segment].valueM)}
                 </div>
               </div>
             ))}
@@ -113,7 +92,7 @@ function LopBlock({ title, data }: LopBlockProps) {
                 className="flex items-center justify-center bg-white/80 px-4 py-3 dark:bg-slate-950/30"
               >
                 <div className="text-sm font-semibold text-blue-600 dark:text-blue-300">
-                  {formatPercent(data[segment].pctRkap)}
+                  {formatPercentInt(data[segment].pctRkap)}
                 </div>
               </div>
             ))}
@@ -135,7 +114,7 @@ function LopBlock({ title, data }: LopBlockProps) {
                 className="flex items-center justify-center bg-white/80 px-4 py-3 dark:bg-slate-950/40"
               >
                 <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
-                  {formatPercent(data[segment].pctStg)}
+                  {formatPercentInt(data[segment].pctStg)}
                 </div>
               </div>
             ))}

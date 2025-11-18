@@ -32,13 +32,7 @@ export default function AddDataPage() {
       </header>
 
       <section className="space-y-4">
-        <div
-          role="button"
-          tabIndex={0}
-          className="upload-card"
-          onClick={openFilePicker}
-          onKeyDown={handleKeyDown}
-        >
+        <div role="button" tabIndex={0} className="upload-card" onClick={openFilePicker} onKeyDown={handleKeyDown}>
           <span className="upload-plus">+</span>
           <p className="text-base font-medium text-black">Click to add a CSV/Excel file</p>
           <p className="upload-note">We support .csv and .xlsx</p>
@@ -61,4 +55,3 @@ export default function AddDataPage() {
     </div>
   );
 }
-

@@ -58,7 +58,7 @@ export async function getFunnelData(params: FunnelQueryParams): Promise<FunnelRe
     const error = await response.json().catch(() => ({ error: "Unknown error" }));
     const errorMessage =
       typeof error === "object" && error !== null
-        ? String(error.error || error.message || error.details || "Unknown error")
+        ? String(error.error ?? error.message ?? error.details ?? "Unknown error")
         : "Unknown error";
     throw new Error(`Funnel API error [${response.status}]: ${errorMessage}`);
   }
@@ -115,4 +115,3 @@ export async function getFunnelData(params: FunnelQueryParams): Promise<FunnelRe
 //     </div>
 //   )
 // }
-

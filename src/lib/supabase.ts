@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
+
 import type { Database } from "./database.types";
 
 /**
@@ -50,27 +51,29 @@ export function createClient(): SupabaseClient<Database> {
 }
 
 /**
- * Create a Supabase client for use in server-side code (route handlers,
- * server components, or background workers) using the Service Role key.
+ * Create a Supabase client for use in server-side code (Server Components,
+ * Server Actions, Route Handlers) that properly handles auth cookies.
  *
- * This must never be called from client code. The helper reads the
- * `SUPABASE_SERVICE_ROLE_KEY` from `process.env` and therefore will not be
- * bundled into the client. Do NOT reference `window` or other browser
- * globals in code that calls this function.
+ * This uses @supabase/ssr to create a client that reads and writes auth
+ * cookies using Next.js cookies() API. This is essential for authentication
+ * to work correctly in server actions and server components.
  *
- * Use this inside Next.js route handlers or any server-only module when you
- * need elevated privileges (for example, to bypass RLS for ETL or
- * administrative operations). Keep the service role key secret.
+ * Use this in Server Components, Server Actions, and Route Handlers where
+ * you need to access the authenticated user's session.
  *
  * @throws {Error} if required env vars are missing.
  *
  * @example
+ *   // In a Server Component or Server Action
  *   const supabase = createServerClient()
- *   const { data, error } = await supabase.from('companies').select('*')
+ *   const { data: { user } } = await supabase.auth.getUser()
  */
-export function createServerClient(): SupabaseClient<Database> {
+export async function createServerClient(): Promise<SupabaseClient<Database>> {
+  const { createServerClient: createSSRClient } = await import("@supabase/ssr");
+  const { cookies } = await import("next/headers");
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url) {
     throw new Error(
@@ -78,26 +81,38 @@ export function createServerClient(): SupabaseClient<Database> {
     );
   }
 
-  if (!serviceRole) {
+  if (!anonKey) {
     throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY in environment. " +
-        "This key must be set in .env.local (server-only, never expose to client). " +
-        "See .env.example for details.",
+      "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in environment. " +
+        "Please set it in your .env.local file (see .env.example).",
     );
   }
 
+  const cookieStore = await cookies();
+
   try {
-    return createSupabaseClient<Database>(url, serviceRole, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
+    return createSSRClient<Database>(url, anonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Ignore errors from setting cookies in Server Components
+            // This is expected when rendering, cookies should be set in Server Actions
+          }
+        },
       },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to initialize Supabase server client: ${message}. ` +
-        "Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are valid.",
+        "Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are valid.",
     );
   }
 }

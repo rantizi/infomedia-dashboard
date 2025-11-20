@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
-import { Settings, CircleHelp, Search, Database, ClipboardList, File, Command } from "lucide-react";
+import { Settings, CircleHelp, Search, Database, ClipboardList, File } from "lucide-react";
 
 import {
   Sidebar,
@@ -60,13 +61,19 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <Link href="/dashboard">
-                <Command />
-                <span className="text-base font-semibold">{APP_CONFIG.name}</span>
+            <SidebarMenuButton asChild className="!h-auto !min-h-[80px] !overflow-visible !p-4">
+              <Link href="/dashboard" className="flex w-full items-center justify-center gap-2">
+                <Image
+                  src="/logo/infomedia.png"
+                  alt="Infomedia Nusantara"
+                  width={240}
+                  height={63}
+                  className="h-16 w-auto object-contain"
+                  priority
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

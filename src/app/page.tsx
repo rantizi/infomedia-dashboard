@@ -1,10 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col bg-white text-black">
       <header className="flex items-center justify-between border-b border-black/10 px-6 py-4">
-        <span className="text-lg font-semibold tracking-tight">Infomedia Dashboard</span>
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/logo/infomedia.png"
+            alt="Infomedia Nusantara"
+            width={210}
+            height={54}
+            className="h-14 w-auto object-contain"
+            priority
+          />
+        </Link>
         <nav className="flex items-center gap-4 text-sm font-medium">
           <Link className="transition hover:text-gray-600 hover:underline" href="/login">
             Login
@@ -20,7 +30,7 @@ export default function HomePage() {
 
       <section className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Infomedia</p>
+          <p className="text-xs font-semibold tracking-[0.25em] text-gray-500">Infomedia Nusantara</p>
           <h1 className="text-4xl font-semibold tracking-tight">Sales Funnel Intelligence</h1>
           <p className="mx-auto max-w-2xl text-base text-gray-600">
             Monitor your revenue funnel, imports, and campaign performance in one clean dashboard. Use your Infomedia

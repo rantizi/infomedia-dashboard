@@ -9,7 +9,7 @@
  * Each row shows values for all 6 segments in millions.
  */
 
-import { cn } from "@/lib/utils";
+import { cn, formatShortMillion } from "@/lib/utils";
 import { Funnel2RowsResponse, Segment, SEGMENT_LABELS } from "@/types/funnel";
 
 interface TargetBlocksProps {
@@ -17,17 +17,6 @@ interface TargetBlocksProps {
 }
 
 const SEGMENTS: Segment[] = ["TELKOM_GROUP", "SOE", "PRIVATE", "GOV", "SME_REG", "TOTAL"];
-
-/**
- * Format number as Indonesian currency in millions
- * @example formatValueM(120.00) → "120,00 M"
- */
-function formatValueM(value: number): string {
-  return `${value.toLocaleString("id-ID", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} M`;
-}
 
 interface TargetRowProps {
   label: string;
@@ -67,7 +56,7 @@ function TargetRow({ label, labelColor, values }: TargetRowProps) {
       {SEGMENTS.map((segment) => (
         <div key={segment} className="flex items-center justify-center bg-white/80 px-4 py-3 dark:bg-slate-950/40">
           <div className="text-base font-semibold text-slate-900 dark:text-slate-50">
-            {formatValueM(values[segment])}
+            {formatShortMillion(values[segment])}
           </div>
         </div>
       ))}

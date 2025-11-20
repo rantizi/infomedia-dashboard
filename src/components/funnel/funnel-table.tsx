@@ -8,7 +8,7 @@
  * - Each cell displays: top line = value in Millions, bottom line = project count
  */
 
-import { cn } from "@/lib/utils";
+import { cn, formatShortMillion } from "@/lib/utils";
 import { Funnel2RowsResponse, Segment, FunnelStage, SEGMENT_LABELS, FUNNEL_STAGE_LABELS } from "@/types/funnel";
 
 interface FunnelTableProps {
@@ -33,17 +33,6 @@ const stageColorClasses: Record<FunnelStage, string> = {
     "bg-amber-100/60 border-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:border-amber-500/40 dark:text-amber-100",
   win: "bg-orange-100/60 border-orange-200/70 text-orange-800 dark:bg-orange-500/20 dark:border-orange-500/40 dark:text-orange-100",
 };
-
-/**
- * Format number as Indonesian currency in millions
- * @example formatValueM(18.45) → "18,45 M"
- */
-function formatValueM(value: number): string {
-  return `${value.toLocaleString("id-ID", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} M`;
-}
 
 /**
  * Format project count
@@ -118,7 +107,7 @@ export function FunnelTable({ data }: FunnelTableProps) {
                 >
                   {/* Value in Millions (bold) */}
                   <div className="text-base font-semibold text-slate-900 dark:text-slate-50">
-                    {formatValueM(cellData.valueM)}
+                    {formatShortMillion(cellData.valueM)}
                   </div>
                   {/* Project count (lighter) */}
                   <div className="text-sm text-slate-500 dark:text-slate-400">{formatProjects(cellData.projects)}</div>

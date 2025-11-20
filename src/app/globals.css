@@ -248,7 +248,9 @@ html {
   padding: 0.9rem 1.2rem;
   font-size: 1rem;
   color: #111111;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .auth-input:focus {
@@ -267,7 +269,10 @@ html {
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
 }
 
 .auth-button:hover:not(:disabled) {
@@ -362,7 +367,10 @@ html {
   gap: 0.75rem;
   text-align: center;
   cursor: pointer;
-  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
 .upload-card:hover {

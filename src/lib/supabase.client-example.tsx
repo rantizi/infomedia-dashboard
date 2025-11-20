@@ -11,8 +11,9 @@
  */
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+
 import type { Database } from "@/lib/database.types";
+import { createClient } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const [companies, setCompanies] = useState<Database["public"]["Tables"]["companies"]["Row"][]>([]);

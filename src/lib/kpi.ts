@@ -26,7 +26,7 @@ export type LopTargetRow = {
  * Fetch the per-stage funnel summary for a tenant.
  */
 export async function getFunnelSummaryForTenant(tenantId: string): Promise<FunnelRow[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("vw_funnel_kpi_per_segment")
     .select("*")
@@ -45,7 +45,7 @@ export async function getFunnelSummaryForTenant(tenantId: string): Promise<Funne
  * Fetch the LOP vs Target metrics for a tenant for a specific year (default 2026).
  */
 export async function getLopTargetsForTenant(tenantId: string, year = 2026): Promise<LopTargetRow[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("vw_lop_vs_target_per_segment")
     .select("*")
@@ -59,4 +59,3 @@ export async function getLopTargetsForTenant(tenantId: string, year = 2026): Pro
 
   return (data ?? []) as LopTargetRow[];
 }
-

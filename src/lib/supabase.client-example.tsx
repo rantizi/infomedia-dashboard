@@ -15,8 +15,10 @@ import { useEffect, useState } from "react";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase";
 
+type CompaniesRow = Database["public"]["Tables"]["companies"]["Row"];
+
 export default function DashboardPage() {
-  const [companies, setCompanies] = useState<Database["public"]["Tables"]["companies"]["Row"][]>([]);
+  const [companies, setCompanies] = useState<CompaniesRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ export default function DashboardPage() {
         if (err) {
           setError(err.message);
         } else {
-          setCompanies(data || []);
+          setCompanies((data ?? []) as CompaniesRow[]);
         }
       } catch (e) {
         setError(String(e));

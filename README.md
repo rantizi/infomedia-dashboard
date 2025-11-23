@@ -132,5 +132,3 @@ I mapped your funnel definitions, stage order, and KPI/segment needs to concrete
    - `funnel-2rows`
 5. Build `SegmentTabs` & `StageTwoRowTable` and wire to `/api/funnel-2rows`
 6. Hook up ETL runner (local or CI/Cron) and verify a sample upload end-to-end
-
-7. 

@@ -401,3 +401,60 @@ html {
   font-size: 0.95rem;
   color: #111111;
 }
+
+/* Aurora background (reactbits style) */
+.aurora {
+  position: absolute;
+  inset: -25% -20% auto -20%;
+  height: 70vh;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.aurora__blob {
+  position: absolute;
+  width: 55vw;
+  aspect-ratio: 1;
+  opacity: 0.72; /* blend slider 0.72 */
+  mix-blend-mode: screen;
+  animation: aurora-drift 80s ease-in-out infinite; /* speed slider 0.1 */
+  transition: opacity 300ms ease;
+}
+
+.aurora__blob-1 {
+  top: 0;
+  left: -5%;
+  animation-duration: 78s;
+}
+
+.aurora__blob-2 {
+  top: 5%;
+  right: -8%;
+  animation-duration: 86s;
+  animation-delay: -10s;
+}
+
+.aurora__blob-3 {
+  top: 32%;
+  left: 35%;
+  animation-duration: 92s;
+  animation-delay: -20s;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(6%, -4%, 0) scale(1.03);
+  }
+  50% {
+    transform: translate3d(-4%, 6%, 0) scale(1.01);
+  }
+  75% {
+    transform: translate3d(6%, 10%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}

@@ -1,80 +1,87 @@
 import { redirect } from "next/navigation";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { createServerClient } from "@/lib/supabase";
-import { getInitials } from "@/lib/utils";
 
-function ProfileInfoRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-3 items-center gap-4">
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-muted-foreground col-span-2 text-sm">{value}</span>
-    </div>
-  );
+import ProfileForm, { AccountInfoCard, ChangePasswordCard, type Division, type ProfileFormValues } from "./ProfileForm";
+
+type AccountInfo = {
+  email: string;
+  role: string;
+  userId: string;
+  lastSignIn: string;
+};
+
+function formatLastSignIn(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(parsed);
 }
 
-async function getUserData() {
+// Lint: complex server-side loader kept as-is for now.
+// eslint-disable-next-line complexity
+export default async function AccountPage() {
   const supabase = await createServerClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (authError || !user) {
+    // Redirect unauthenticated users to login; adjust the path if your auth route differs.
     redirect("/login");
   }
 
-  return user;
-}
+  const { data: profileRow } = await supabase.from("users").select("full_name").eq("id", user.id).maybeSingle();
 
-export default async function AccountPage() {
-  const user = await getUserData();
-  const avatarUrl = user.user_metadata?.avatar_url ?? undefined;
-  const fullName = user.user_metadata?.full_name ?? undefined;
-  const displayName = fullName ?? "User";
-  const initials = getInitials(fullName ?? user.email ?? "U");
-  const role = user.role ?? "User";
-  const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : "N/A";
+  const tenantId =
+    process.env.DEFAULT_TENANT_ID ??
+    process.env.SUPABASE_DEFAULT_TENANT_ID ??
+    process.env.NEXT_PUBLIC_SUPABASE_DEFAULT_TENANT_ID;
+
+  let membershipQuery = supabase
+    .from("memberships")
+    .select("role, division, tenant_id")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (tenantId) {
+    membershipQuery = membershipQuery.eq("tenant_id", tenantId);
+  }
+
+  const { data: membership } = await membershipQuery.maybeSingle();
+
+  const initialProfile: ProfileFormValues = {
+    full_name: profileRow?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "",
+    phone: (user.user_metadata?.phone as string | undefined) ?? "",
+    job_title: (user.user_metadata?.job_title as string | undefined) ?? "",
+    division:
+      (membership?.division as Division | null) ?? (user.user_metadata?.division as Division | undefined) ?? "OTHER",
+  };
+
+  const accountInfo: AccountInfo = {
+    email: user.email ?? "",
+    role: membership?.role ?? "contributor",
+    userId: user.id,
+    lastSignIn: formatLastSignIn(user.last_sign_in_at),
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-8">
+      <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
         <p className="text-muted-foreground text-sm">Manage your account settings and preferences.</p>
       </div>
-      <Separator />
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Your personal information.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={avatarUrl} alt={fullName} />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{displayName}</p>
-                <p className="text-muted-foreground text-sm">{user.email}</p>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <ProfileInfoRow label="Email" value={user.email} />
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-sm font-medium">Role</span>
-                <span className="text-muted-foreground col-span-2 text-sm capitalize">{role}</span>
-              </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-sm font-medium">User ID</span>
-                <span className="text-muted-foreground col-span-2 font-mono text-sm text-xs">{user.id}</span>
-              </div>
-              <ProfileInfoRow label="Last Sign In" value={lastSignIn} />
-            </div>
-          </CardContent>
-        </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+        <ProfileForm initialValues={initialProfile} />
+        <div className="space-y-6">
+          <AccountInfoCard {...accountInfo} />
+          <ChangePasswordCard />
+        </div>
       </div>
     </div>
   );

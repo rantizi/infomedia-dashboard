@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import numpy as np
 import pandas as pd
 from datetime import datetime, timezone
@@ -30,7 +31,7 @@ def normalize_text(x: str) -> str:
         return None
     x = str(x).strip()
     x = re.sub(r"\s+", " ", x)
-    return x
+    return x if x else None
 
 def normalize_company(name: str) -> str:
     if not name or pd.isna(name):
@@ -45,19 +46,34 @@ def normalize_company(name: str) -> str:
     return x
 
 def parse_money(val):
-    if pd.isna(val): return np.nan
-    s = str(val)
-    s = s.replace(".", "").replace(",", "")
-    s = re.sub(r"[^\d\-]", "", s)
-    try: return float(s)
-    except: return np.nan
+    if pd.isna(val):
+        return np.nan
+    s = str(val).strip()
+    if not s:
+        return np.nan
+    sign = "-" if s.startswith("-") else ""
+    s = s.lstrip("+-")
+    s = re.sub(r"[^0-9.,]", "", s)
+    if not s:
+        return np.nan
+    last_dot = s.rfind(".")
+    last_comma = s.rfind(",")
+    dec_pos = max(last_dot, last_comma)
+    if dec_pos == -1:
+        cleaned = re.sub(r"[.,]", "", s)
+    else:
+        int_part = re.sub(r"[.,]", "", s[:dec_pos])
+        frac_part = re.sub(r"[.,]", "", s[dec_pos + 1 :])
+        cleaned = f"{int_part}.{frac_part}"
+    try:
+        return float(f"{sign}{cleaned}")
+    except Exception:
+        return np.nan
 
 def parse_datetime(val):
-    if pd.isna(val): return pd.NaT
-    for fmt in (None, "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y"):
-        try:
-            return pd.to_datetime(val, format=fmt, dayfirst=True, errors="raise")
-        except: continue
+    # Kept for backward compatibility; prefer vectorized branch below.
+    if pd.isna(val):
+        return pd.NaT
     return pd.to_datetime(val, errors="coerce", dayfirst=True)
 
 def normalize_stage(stage):
@@ -79,7 +95,7 @@ def normalize_source(src):
     if "MSDC" in x: return "MSDC"
     if "MARKET" in x or "MKT" in x: return "MARKETING"
     if "SALES" in x: return "SALES"
-    return x
+    return "OTHER"
 
 def source_rank(src):
     src = normalize_source(src)
@@ -92,8 +108,16 @@ COLUMN_ALIASES = {
     "sales_person":   ["sales", "pic_sales", "account_manager", "am", "owner", "nama am"],
     "source_division":["sumber", "divisi_sumber", "source", "asal data", "origin"],
     "funnel_stage":   ["stage", "status", "funnel", "tahap"],
-    "est_revenue":    ["nilai", "value", "amount", "est_value", "revenue", "nominal",
-                       "nilai project", "nilai 2026", "est win (mm)", "est live (mm)"],
+    "est_revenue":    [ "nilai 2026",       # ← PRIORITAS UTAMA
+                        "nilai project",   # fallback kalau tidak ada Nilai 2026
+                        "nilai",
+                        "value",
+                        "amount",
+                        "est_value",
+                        "revenue",
+                        "nominal",
+                        "est win (mm)",
+                        "est live (mm)",],
     "created_at":     ["tanggal", "created_at", "created date", "tgl dibuat", "date"],
     "updated_at":     ["updated_at", "last update", "tgl update", "modified"],
     "segment":       ["segment sales", "segment_sales", "segment"]
@@ -139,12 +163,14 @@ for c in df.columns:
 # Default sumber & fallback tanggal
 if "source_division" not in df.columns or df["source_division"].isna().all():
     df["source_division"] = "SALES"
-if "created_at" not in df.columns or df["created_at"].isna().all():
-    df["created_at"] = pd.to_datetime(pd.Timestamp.now().date())
 
 # Jika ada beberapa kandidat uang, pilih satu → est_revenue
-money_candidates = [c for c in ["est_revenue", "nilai project", "nilai 2026", "est win (mm)", "est live (mm)"] if c in df.columns]
-if "est_revenue" not in df.columns and money_candidates:
+money_candidates = [
+    c for c in ["Nilai 2026", "est_revenue", "nilai project", "est win (mm)", "est live (mm)"]
+    if c in df.columns
+]
+
+if money_candidates:
     df["est_revenue"] = df[money_candidates[0]]
 
 # ========== 2) Cleaning kolom spesifik ==========
@@ -158,7 +184,19 @@ if "est_revenue" in df.columns:
 
 for dt_col in ["created_at", "updated_at"]:
     if dt_col in df.columns:
-        df[dt_col] = df[dt_col].apply(parse_datetime)
+        raw = df[dt_col]
+        parsed = pd.to_datetime(raw, errors="coerce", dayfirst=True)
+        serial_mask = parsed.isna()
+        if serial_mask.any():
+            serials = pd.to_numeric(raw, errors="coerce")
+            serial_mask &= serials.notna()
+            parsed.loc[serial_mask] = pd.to_datetime(
+                serials.loc[serial_mask],
+                unit="d",
+                origin="1899-12-30",
+                errors="coerce",
+            )
+        df[dt_col] = parsed
 
 # Buang baris tanpa key
 before_rows = len(df)
@@ -229,7 +267,12 @@ if "est_revenue" in df.columns:
         print(f"{k:>6}  {_fmt(v)}")
 
 # ========== 5) Export hasil ==========
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+try:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+except Exception as e:
+    print(f"Failed to create output dir {OUTPUT_DIR}: {e}")
+    sys.exit(1)
+
 # nama file: gunakan UTC lalu jadikan naive untuk string
 ts = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%d-%H%M%S")
 
@@ -237,7 +280,14 @@ csv_path = os.path.join(OUTPUT_DIR, f"lop_clean_{ts}.csv")
 xlsx_path = os.path.join(OUTPUT_DIR, f"lop_clean_{ts}.xlsx")
 pq_path  = os.path.join(OUTPUT_DIR, f"lop_clean_{ts}.parquet")
 
-df.to_csv(csv_path, index=False, encoding="utf-8")
+written = []
+failed = []
+
+try:
+    df.to_csv(csv_path, index=False, encoding="utf-8")
+    written.append(csv_path)
+except Exception as e:
+    failed.append((csv_path, e))
 
 # sebelum to_excel: hilangkan timezone agar Excel tidak error
 for col in df.select_dtypes(include=["datetimetz"]).columns:
@@ -246,21 +296,32 @@ for col in df.select_dtypes(include=["datetimetz"]).columns:
     except AttributeError:
         df[col] = df[col].dt.tz_localize(None)
 
-with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
-    df.to_excel(writer, index=False, sheet_name="cleaned")
-    # ringkasan sederhana (jika kolom tersedia)
-    try:
-        summary_stage = df.pivot_table(index="funnel_stage", values="project_name", aggfunc="count").rename(columns={"project_name":"rows"})
-        summary_src   = df.pivot_table(index="source_division", values="project_name", aggfunc="count").rename(columns={"project_name":"rows"})
-        summary_stage.to_excel(writer, sheet_name="summary", startrow=0)
-        summary_src.to_excel(writer,   sheet_name="summary", startrow=len(summary_stage)+3)
-    except Exception:
-        pass
+try:
+    with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="cleaned")
+        # ringkasan sederhana (jika kolom tersedia)
+        try:
+            summary_stage = df.pivot_table(index="funnel_stage", values="project_name", aggfunc="count").rename(columns={"project_name":"rows"})
+            summary_src   = df.pivot_table(index="source_division", values="project_name", aggfunc="count").rename(columns={"project_name":"rows"})
+            summary_stage.to_excel(writer, sheet_name="summary", startrow=0)
+            summary_src.to_excel(writer,   sheet_name="summary", startrow=len(summary_stage)+3)
+        except Exception:
+            pass
+    written.append(xlsx_path)
+except Exception as e:
+    failed.append((xlsx_path, e))
 
 # Parquet (cepat untuk analitik lanjut)
 try:
     df.to_parquet(pq_path, index=False)
+    written.append(pq_path)
 except Exception as e:
-    print(f"(skip parquet) {e}")
+    failed.append((pq_path, e))
 
-print(f"\nSaved to:\n- {csv_path}\n- {xlsx_path}\n- {pq_path}")
+print("\nSaved to:")
+for path in written:
+    print(f"- {path}")
+if failed:
+    print("\nSkipped/failed:")
+    for path, err in failed:
+        print(f"- {path}: {err}")

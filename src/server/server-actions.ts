@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-import { createServerClient } from "@/lib/supabase";
+import { createServerClient, createServiceRoleClient } from "@/lib/supabase";
 
 export async function getValueFromCookie(key: string): Promise<string | undefined> {
   const cookieStore = await cookies();
@@ -31,23 +31,34 @@ export async function getPreference<T extends string>(key: string, allowed: read
 const TENANT_ID_COOKIE = "tenant_id";
 
 /**
- * Try to get tenant_id from the authenticated user's membership.
- * Returns null if user is not authenticated or has no membership.
- *
- * Note: This uses the service role client which doesn't have access to user sessions.
- * For a production implementation, you'd need to create a cookie-based auth client.
- * For now, this is a placeholder that will be enhanced when auth is fully configured.
+ * Derive tenant from the authenticated user's membership.
+ * Returns null if unauthenticated or no membership is found.
  */
 async function getTenantFromUserMembership(): Promise<string | null> {
   try {
-    // TODO: Implement proper cookie-based auth client to read user session
-    // For now, this returns null and relies on cookie/env fallbacks
-    // In production, you would:
-    // 1. Read Supabase auth cookies (sb-<project-ref>-auth-token)
-    // 2. Create a user-scoped client (not service role)
-    // 3. Get user from session
-    // 4. Query memberships table for tenant_id
-    return null;
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("memberships")
+      .select("tenant_id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data.tenant_id;
   } catch {
     return null;
   }
@@ -64,7 +75,8 @@ async function getFirstTenantFromDatabase(): Promise<string | null> {
   }
 
   try {
-    const supabase = await createServerClient();
+    const supabase =
+      process.env.SUPABASE_SERVICE_ROLE_KEY !== undefined ? createServiceRoleClient() : await createServerClient();
     const { data, error } = await supabase.from("tenants").select("id").limit(1).single();
 
     if (error) {
@@ -75,7 +87,7 @@ async function getFirstTenantFromDatabase(): Promise<string | null> {
       return null;
     }
 
-    return data.id as string;
+    return data.id;
   } catch {
     return null;
   }

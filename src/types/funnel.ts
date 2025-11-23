@@ -6,6 +6,8 @@ export type FunnelStage = "leads" | "prospect" | "qualified" | "submission" | "w
 
 export type Segment = "TELKOM_GROUP" | "SOE" | "PRIVATE" | "GOV" | "SME_REG" | "TOTAL";
 
+export const SEGMENT_ORDER: Segment[] = ["TELKOM_GROUP", "SOE", "PRIVATE", "GOV", "SME_REG", "TOTAL"];
+
 export const SEGMENT_LABELS: Record<Segment, string> = {
   TELKOM_GROUP: "Telkom Group",
   SOE: "SOE",
@@ -21,6 +23,42 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   qualified: "Qualified",
   submission: "Submissions",
   win: "Win",
+};
+
+export type StageKpi = {
+  stage: FunnelStage;
+  value_m: number;
+  projects: number;
+};
+
+export type SegmentStageRecord = {
+  [K in FunnelStage]: {
+    value_m: number;
+    projects: number;
+  };
+};
+
+export interface SegmentFunnel {
+  segment: string;
+  stages: SegmentStageRecord;
+  year?: number;
+}
+
+export interface FunnelApiResponse {
+  data: SegmentFunnel[];
+}
+
+export type LopTargetRow = {
+  segment: string;
+  target_rkap_m: number;
+  target_stg_m: number;
+  lop_value_m: number;
+  qualified_lop_m: number;
+  year?: number;
+};
+
+export type LopTargetsApiResponse = {
+  data: LopTargetRow[];
 };
 
 /**

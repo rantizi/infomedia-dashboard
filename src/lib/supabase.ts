@@ -2,6 +2,8 @@ import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/
 
 import type { Database } from "./database.types";
 
+// TODO: Consolidate with src/lib/supabaseClient.ts so there is a single set of helpers.
+
 /**
  * Create a typed Supabase client for use in client components (browser).
  *
@@ -114,6 +116,32 @@ export async function createServerClient(): Promise<SupabaseClient<Database>> {
       `Failed to initialize Supabase server client: ${message}. ` +
         "Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are valid.",
     );
+  }
+}
+
+/**
+ * Create a Supabase client using the service role key.
+ * Use only on the server for privileged operations (ETL, backfills, admin tasks).
+ */
+export function createServiceRoleClient(): SupabaseClient<Database> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL in environment.");
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY in environment. This key must never be exposed to the client.");
+  }
+
+  try {
+    return createSupabaseClient<Database>(url, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to initialize Supabase service role client: ${message}`);
   }
 }
 

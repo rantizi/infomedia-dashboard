@@ -10,24 +10,25 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn("Supabase env vars missing; middleware auth checks skipped.");
+    return response;
+  }
+
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
-  );
+  });
 
   const {
     data: { user },
@@ -43,11 +44,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/signup" ||
     pathname.startsWith("/login/") ||
     pathname.startsWith("/signup/");
-  const isPublicAsset =
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/static") ||
-    pathname.startsWith("/api") ||
-    pathname.includes("."); // files like favicon.ico, etc.
+  const isPublicAsset = pathname.startsWith("/_next") || pathname.startsWith("/static") || pathname.includes("."); // files like favicon.ico, etc.
 
   // Allow unauthenticated users to access root, login, signup, and public assets
   const isPublicRoute = isRootPath || isAuthRoute || isPublicAsset;

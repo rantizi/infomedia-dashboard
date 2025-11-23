@@ -1,21 +1,12 @@
 /* eslint-disable security/detect-object-injection */
-/**
- * FunnelTable Component
- *
- * Renders the main funnel table with:
- * - 5 rows (Leads, Prospects, Qualified, Submissions, Win)
- * - 6 columns (Telkom Group, SOE, Private, Gov, SME & Reg, Total)
- * - Each cell displays: top line = value in Millions, bottom line = project count
- */
-
-import { cn, formatShortMillion } from "@/lib/utils";
-import { Funnel2RowsResponse, Segment, FunnelStage, SEGMENT_LABELS, FUNNEL_STAGE_LABELS } from "@/types/funnel";
+import { cn } from "@/lib/utils";
+import type { FunnelStage, SegmentFunnel, SegmentStageRecord } from "@/types/funnel";
 
 interface FunnelTableProps {
-  data: Funnel2RowsResponse;
+  data: SegmentFunnel[];
+  segments: string[];
+  activeSegment?: string;
 }
-
-const SEGMENTS: Segment[] = ["TELKOM_GROUP", "SOE", "PRIVATE", "GOV", "SME_REG", "TOTAL"];
 
 const STAGES: FunnelStage[] = ["leads", "prospect", "qualified", "submission", "win"];
 
@@ -34,31 +25,76 @@ const stageColorClasses: Record<FunnelStage, string> = {
   win: "bg-orange-100/60 border-orange-200/70 text-orange-800 dark:bg-orange-500/20 dark:border-orange-500/40 dark:text-orange-100",
 };
 
-/**
- * Format project count
- * @example formatProjects(26) → "26 projek"
- */
-function formatProjects(count: number): string {
-  return `${count} projek`;
-}
+const SEGMENT_NORMALIZATION_MAP: Record<string, string> = {
+  telkom: "telkom group",
+  "telkom group": "telkom group",
+  soe: "soe",
+  private: "private",
+  government: "gov",
+  gov: "gov",
+  "sme & regional": "sme & reg",
+  "sme and regional": "sme & reg",
+  "sme & reg": "sme & reg",
+  "sme reg": "sme & reg",
+  total: "total",
+};
+
+const normalizeSegment = (segment: string): string => {
+  const normalized = segment.trim().toLowerCase();
+  return SEGMENT_NORMALIZATION_MAP[normalized] ?? normalized;
+};
+
+const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
+  "telkom group": "Telkom Group",
+  soe: "SOE",
+  private: "Private",
+  gov: "Gov",
+  "sme & reg": "SME & Reg",
+  "sme & regional": "SME & Reg",
+  "sme and regional": "SME & Reg",
+  total: "Total",
+};
+
+const STAGE_LABELS: Record<FunnelStage, string> = {
+  leads: "Leads",
+  prospect: "Prospects",
+  qualified: "Qualified",
+  submission: "Submissions",
+  win: "Win",
+};
+
+const formatValueM = (value: number): string => {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return `${safeValue.toLocaleString("id-ID", { maximumFractionDigits: 1 })} M`;
+};
+
+const formatProjects = (count: number): string => {
+  const safeCount = Number.isFinite(count) ? Math.round(count) : 0;
+  return `${safeCount.toLocaleString("id-ID")} projek`;
+};
 
 /**
  * Stage label pill with color coding
  */
 function StageLabel({ stage }: { stage: FunnelStage }) {
-  return <span className={cn(stageBadgeBase, stageColorClasses[stage])}>{FUNNEL_STAGE_LABELS[stage]}</span>;
+  return <span className={cn(stageBadgeBase, stageColorClasses[stage])}>{STAGE_LABELS[stage]}</span>;
 }
 
 /**
- * FunnelTable — Main funnel visualization table
+ * FunnelTable - Main funnel visualization table
  *
  * Layout:
- * - CSS Grid with 7 columns: 1 label column + 6 segment columns
+ * - CSS Grid with a fixed stage column + one column per visible segment
  * - First column is fixed width for stage labels
- * - Remaining 6 columns are flexible/equal width
+ * - Segment columns share equal widths
  * - Each cell contains two lines: bold value + lighter project count
  */
-export function FunnelTable({ data }: FunnelTableProps) {
+export function FunnelTable({ data, segments, activeSegment }: FunnelTableProps) {
+  const segmentLookup = new Map<string, SegmentStageRecord>(
+    data.map((segment) => [normalizeSegment(segment.segment), segment.stages]),
+  );
+  const activeNormalized = activeSegment ? normalizeSegment(activeSegment) : null;
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/80 p-1 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
       <div className="min-w-[900px]">
@@ -66,16 +102,20 @@ export function FunnelTable({ data }: FunnelTableProps) {
         <div
           className="grid gap-px border-b border-slate-200/70 bg-white/60 dark:border-slate-800/60 dark:bg-slate-900/40"
           style={{
-            gridTemplateColumns: "180px repeat(6, 1fr)",
+            gridTemplateColumns: `180px repeat(${segments.length}, 1fr)`,
           }}
         >
           <div className="px-4 py-3">{/* Empty cell for top-left corner */}</div>
-          {SEGMENTS.map((segment) => (
+          {segments.map((segment) => (
             <div
               key={segment}
-              className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-200"
+              className={cn(
+                "px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-200",
+                activeNormalized === normalizeSegment(segment) &&
+                  "rounded-t-md bg-blue-50/70 text-blue-700 shadow-sm dark:bg-blue-500/15 dark:text-blue-100",
+              )}
             >
-              {SEGMENT_LABELS[segment]}
+              {SEGMENT_LABEL_OVERRIDES[normalizeSegment(segment)] ?? segment}
             </div>
           ))}
         </div>
@@ -89,7 +129,7 @@ export function FunnelTable({ data }: FunnelTableProps) {
               stageIndex % 2 === 0 ? "bg-white/60 dark:bg-slate-900/40" : "bg-white/40 dark:bg-slate-900/25",
             )}
             style={{
-              gridTemplateColumns: "180px repeat(6, 1fr)",
+              gridTemplateColumns: `180px repeat(${segments.length}, 1fr)`,
             }}
           >
             {/* Stage Label Cell */}
@@ -98,19 +138,35 @@ export function FunnelTable({ data }: FunnelTableProps) {
             </div>
 
             {/* Data Cells */}
-            {SEGMENTS.map((segment) => {
-              const cellData = data.stages[stage][segment];
+            {segments.map((segment) => {
+              const stageData = segmentLookup.get(normalizeSegment(segment))?.[stage] ?? { value_m: 0, projects: 0 };
+              const isActive = activeNormalized === normalizeSegment(segment);
               return (
                 <div
                   key={segment}
-                  className="flex flex-col items-center justify-center bg-white/80 px-4 py-4 text-center dark:bg-slate-950/40"
+                  className={cn(
+                    "flex flex-col items-center justify-center bg-white/80 px-4 py-4 text-center dark:bg-slate-950/40",
+                    isActive && "bg-blue-50/80 ring-1 ring-blue-200/80 dark:bg-blue-500/10 dark:ring-blue-500/30",
+                  )}
                 >
                   {/* Value in Millions (bold) */}
-                  <div className="text-base font-semibold text-slate-900 dark:text-slate-50">
-                    {formatShortMillion(cellData.valueM)}
+                  <div
+                    className={cn(
+                      "text-base font-semibold text-slate-900 dark:text-slate-50",
+                      isActive && "text-blue-700 dark:text-blue-100",
+                    )}
+                  >
+                    {formatValueM(stageData.value_m)}
                   </div>
                   {/* Project count (lighter) */}
-                  <div className="text-sm text-slate-500 dark:text-slate-400">{formatProjects(cellData.projects)}</div>
+                  <div
+                    className={cn(
+                      "text-sm text-slate-500 dark:text-slate-400",
+                      isActive && "text-blue-600 dark:text-blue-200",
+                    )}
+                  >
+                    {formatProjects(stageData.projects)}
+                  </div>
                 </div>
               );
             })}

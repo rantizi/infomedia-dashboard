@@ -220,7 +220,7 @@ export function LopBlocks({ targets, segments, activeSegment }: LopBlocksProps) 
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">List of Projects (LOP)</h2>
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Daftar Projek (LOP)</h2>
 
       <LopBlock
         title="Kecukupan LOP"
@@ -230,7 +230,7 @@ export function LopBlocks({ targets, segments, activeSegment }: LopBlocksProps) 
         activeSegment={activeSegment}
       />
       <LopBlock
-        title="Qualified LOP"
+        title="LOP Qualified"
         kind="qualified"
         segments={segments}
         targetLookup={targetLookup}

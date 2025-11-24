@@ -21,14 +21,14 @@ type CommandLink = {
 
 const dashboardLinks: CommandLink[] = [
   { label: "Overview", href: "/dashboard" },
-  { label: "Add data", href: "/add-data" },
+  { label: "Add Data", href: "/add-data" },
   { label: "Leads (MSDC)", href: "/leads" },
 ];
 
 const authLinks: CommandLink[] = [
   { label: "Login", href: "/login" },
-  { label: "Sign up", href: "/signup" },
-  { label: "Account", href: "/account" },
+  { label: "Sign Up", href: "/signup" },
+  { label: "Akun", href: "/account" },
 ];
 
 type GlobalSearchProps = {
@@ -77,21 +77,29 @@ export function GlobalSearch({ open: controlledOpen, onOpenChange }: GlobalSearc
   }, [setOpen]);
 
   const groups: { heading: string; items: CommandLink[] }[] = [
-    { heading: "Dashboards", items: dashboardLinks },
-    { heading: "Authentication", items: authLinks },
+    { heading: "Dashboard", items: dashboardLinks },
+    { heading: "Autentikasi", items: authLinks },
   ];
+
+  const itemClassName =
+    "cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-red-50 hover:text-red-700 data-[selected=true]:bg-red-100 data-[selected=true]:text-red-800 dark:hover:bg-red-900/40 dark:hover:text-red-100 dark:data-[selected=true]:bg-red-900/60 dark:data-[selected=true]:text-red-100";
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search dashboards, pages..." />
+      <CommandInput placeholder="Cari Dashboard, halaman..." />
       <CommandList>
-        <CommandEmpty>No result.</CommandEmpty>
+        <CommandEmpty>Tidak ada hasil.</CommandEmpty>
         {groups.map((group, index) => (
           <React.Fragment key={group.heading}>
             {index > 0 && <CommandSeparator />}
             <CommandGroup heading={group.heading}>
               {group.items.map((item) => (
-                <CommandItem key={item.href} value={item.label} onSelect={() => handleSelect(item.href)}>
+                <CommandItem
+                  key={item.href}
+                  value={item.label}
+                  onSelect={() => handleSelect(item.href)}
+                  className={itemClassName}
+                >
                   <span>{item.label}</span>
                 </CommandItem>
               ))}

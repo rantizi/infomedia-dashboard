@@ -60,8 +60,8 @@ export function LayoutControls(props: LayoutControlsProps) {
       <PopoverContent align="end">
         <div className="flex flex-col gap-5">
           <div className="space-y-1.5">
-            <h4 className="text-sm leading-none font-medium">Layout Settings</h4>
-            <p className="text-muted-foreground text-xs">Customize your dashboard layout preferences.</p>
+            <h4 className="text-sm leading-none font-medium">Pengaturan Layout</h4>
+            <p className="text-muted-foreground text-xs">Sesuaikan preferensi layout Dashboard Anda.</p>
           </div>
           <div className="space-y-3">
             <div className="space-y-1">
@@ -96,17 +96,17 @@ export function LayoutControls(props: LayoutControlsProps) {
                 value={themeMode}
                 onValueChange={(value) => handleValueChange("theme_mode", value)}
               >
-                <ToggleGroupItem value="light" aria-label="Toggle inset">
-                  Light
+                <ToggleGroupItem value="light" aria-label="Pilih mode terang">
+                  Terang
                 </ToggleGroupItem>
-                <ToggleGroupItem value="dark" aria-label="Toggle sidebar">
-                  Dark
+                <ToggleGroupItem value="dark" aria-label="Pilih mode gelap">
+                  Gelap
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Sidebar Variant</Label>
+              <Label className="text-xs font-medium">Varian Sidebar</Label>
               <ToggleGroup
                 className="w-full **:data-[slot=toggle-group-item]:flex-1 **:data-[slot=toggle-group-item]:text-xs"
                 size="sm"
@@ -115,20 +115,20 @@ export function LayoutControls(props: LayoutControlsProps) {
                 value={variant}
                 onValueChange={(value) => handleValueChange("sidebar_variant", value)}
               >
-                <ToggleGroupItem value="inset" aria-label="Toggle inset">
+                <ToggleGroupItem value="inset" aria-label="Pilih inset">
                   Inset
                 </ToggleGroupItem>
-                <ToggleGroupItem value="sidebar" aria-label="Toggle sidebar">
+                <ToggleGroupItem value="sidebar" aria-label="Pilih sidebar">
                   Sidebar
                 </ToggleGroupItem>
-                <ToggleGroupItem value="floating" aria-label="Toggle floating">
+                <ToggleGroupItem value="floating" aria-label="Pilih floating">
                   Floating
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Navbar Style</Label>
+              <Label className="text-xs font-medium">Gaya Navbar</Label>
               <ToggleGroup
                 className="w-full **:data-[slot=toggle-group-item]:flex-1 **:data-[slot=toggle-group-item]:text-xs"
                 size="sm"
@@ -137,17 +137,17 @@ export function LayoutControls(props: LayoutControlsProps) {
                 value={navbarStyle}
                 onValueChange={(value) => handleValueChange("navbar_style", value)}
               >
-                <ToggleGroupItem value="sticky" aria-label="Toggle sticky">
-                  Sticky
+                <ToggleGroupItem value="sticky" aria-label="Pilih sticky">
+                  Menempel
                 </ToggleGroupItem>
-                <ToggleGroupItem value="scroll" aria-label="Toggle scroll">
-                  Scroll
+                <ToggleGroupItem value="scroll" aria-label="Pilih scroll">
+                  Mengikuti gulir
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Sidebar Collapsible</Label>
+              <Label className="text-xs font-medium">Sidebar dapat diciutkan</Label>
               <ToggleGroup
                 className="w-full **:data-[slot=toggle-group-item]:flex-1 **:data-[slot=toggle-group-item]:text-xs"
                 size="sm"
@@ -156,17 +156,17 @@ export function LayoutControls(props: LayoutControlsProps) {
                 value={collapsible}
                 onValueChange={(value) => handleValueChange("sidebar_collapsible", value)}
               >
-                <ToggleGroupItem value="icon" aria-label="Toggle icon">
+                <ToggleGroupItem value="icon" aria-label="Tampilkan ikon">
                   Icon
                 </ToggleGroupItem>
-                <ToggleGroupItem value="offcanvas" aria-label="Toggle offcanvas">
+                <ToggleGroupItem value="offcanvas" aria-label="Tampilkan offcanvas">
                   OffCanvas
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Content Layout</Label>
+              <Label className="text-xs font-medium">Layout Konten</Label>
               <ToggleGroup
                 className="w-full **:data-[slot=toggle-group-item]:flex-1 **:data-[slot=toggle-group-item]:text-xs"
                 size="sm"
@@ -175,11 +175,11 @@ export function LayoutControls(props: LayoutControlsProps) {
                 value={contentLayout}
                 onValueChange={(value) => handleValueChange("content_layout", value)}
               >
-                <ToggleGroupItem value="centered" aria-label="Toggle centered">
-                  Centered
+                <ToggleGroupItem value="centered" aria-label="Pilih layout tengah">
+                  Tengah
                 </ToggleGroupItem>
-                <ToggleGroupItem value="full-width" aria-label="Toggle full-width">
-                  Full Width
+                <ToggleGroupItem value="full-width" aria-label="Pilih lebar penuh">
+                  Lebar Penuh
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>

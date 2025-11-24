@@ -57,12 +57,12 @@ export function ProfileMenu({ user, children, side = "bottom", align = "end", si
 
         <DropdownMenuItem onClick={() => router.push("/account")} className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
-          <span>Account</span>
+          <span>Akun</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="cursor-pointer">
           <Bell className="mr-2 h-4 w-4" />
-          <span>Notifications</span>
+          <span>Notifikasi</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

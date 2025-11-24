@@ -35,19 +35,19 @@ export function LogoutButton() {
           className="text-destructive focus:text-destructive cursor-pointer"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <span>Keluar</span>
         </DropdownMenuItem>
       </AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Log out?</AlertDialogTitle>
-          <AlertDialogDescription>Are you sure you want to log out from this account?</AlertDialogDescription>
+          <AlertDialogTitle>Keluar dari akun?</AlertDialogTitle>
+          <AlertDialogDescription>Apakah Anda yakin ingin keluar dari akun ini?</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={isPending}>
-            {isPending ? "Logging out..." : "Log out"}
+            {isPending ? "Sedang keluar..." : "Keluar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -22,7 +22,7 @@ const optionalField = z
   .transform((value) => (value && value.length > 0 ? value : null));
 
 const profileSchema = z.object({
-  full_name: z.string().trim().min(1, "Full name is required"),
+  full_name: z.string().trim().min(1, "Nama lengkap wajib diisi"),
   phone: optionalField,
   job_title: optionalField,
   division: z.enum(divisionOptions),
@@ -67,13 +67,13 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
       const payload = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
 
       if (!response.ok || !payload?.success) {
-        setServerError(payload?.error ?? "Failed to update profile.");
+        setServerError(payload?.error ?? "Gagal memperbarui profil.");
         return;
       }
 
-      setSuccessMessage("Profile updated successfully.");
+      setSuccessMessage("Profil berhasil diperbarui.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Something went wrong.";
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
       setServerError(message);
     }
   };
@@ -81,8 +81,8 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>Profile</CardTitle>
-        <CardDescription>Edit how your profile appears to your team.</CardDescription>
+        <CardTitle>Profil</CardTitle>
+        <CardDescription>Ubah tampilan profil Anda untuk tim.</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -100,25 +100,25 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="full_name">Full name</Label>
+              <Label htmlFor="full_name">Nama lengkap</Label>
               <Input
                 id="full_name"
                 {...register("full_name")}
                 required
-                placeholder="Your full name"
+                placeholder="Nama lengkap Anda"
                 autoComplete="name"
               />
               {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Nomor telepon</Label>
               <Input id="phone" {...register("phone")} placeholder="+62 812 3456 7890" autoComplete="tel" />
               {errors.phone && <p className="text-xs text-red-600">{errors.phone.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="job_title">Job title</Label>
+              <Label htmlFor="job_title">Jabatan</Label>
               <Input
                 id="job_title"
                 {...register("job_title")}
@@ -129,7 +129,7 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="division">Division</Label>
+              <Label htmlFor="division">Divisi</Label>
               <select
                 id="division"
                 {...register("division")}
@@ -147,8 +147,8 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
         </CardContent>
 
         <CardFooter className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save changes"}
+          <Button type="submit" disabled={isSubmitting} variant="success">
+            {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>
         </CardFooter>
       </form>
@@ -167,14 +167,14 @@ export function AccountInfoCard({ email, role, userId, lastSignIn }: AccountInfo
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>Account</CardTitle>
-        <CardDescription>Read-only account metadata.</CardDescription>
+        <CardTitle>Akun</CardTitle>
+        <CardDescription>Informasi akun hanya-baca.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <InfoRow label="Email" value={email} />
-        <InfoRow label="Role" value={role} />
+        <InfoRow label="Peran" value={role} />
         <InfoRow label="User ID" value={<code className="text-xs break-all">{userId}</code>} />
-        <InfoRow label="Last sign in" value={lastSignIn} />
+        <InfoRow label="Login terakhir" value={lastSignIn} />
       </CardContent>
     </Card>
   );
@@ -204,12 +204,12 @@ export function ChangePasswordCard() {
     setSuccess(null);
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("Password minimal 8 karakter.");
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      setError("Passwords do not match.");
+      setError("Password tidak sama.");
       return;
     }
 
@@ -224,15 +224,16 @@ export function ChangePasswordCard() {
       const payload = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
 
       if (!response.ok || !payload?.success) {
-        setError(payload?.error ?? "Failed to update password.");
+        setError(payload?.error ?? "Gagal memperbarui Password.");
         return;
       }
 
-      setSuccess("Password updated successfully.");
+      setSuccess("Password berhasil diperbarui.");
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (updatePasswordError) {
-      const message = updatePasswordError instanceof Error ? updatePasswordError.message : "Failed to update password.";
+      const message =
+        updatePasswordError instanceof Error ? updatePasswordError.message : "Gagal memperbarui Password.";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -242,8 +243,8 @@ export function ChangePasswordCard() {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>Change password</CardTitle>
-        <CardDescription>Use Supabase Auth to update your password.</CardDescription>
+        <CardTitle>Ubah Password</CardTitle>
+        <CardDescription>Gunakan Supabase Auth untuk memperbarui Password Anda.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {success && (
@@ -257,33 +258,33 @@ export function ChangePasswordCard() {
 
         <form className="space-y-3" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="new-password">New password</Label>
+            <Label htmlFor="new-password">Password baru</Label>
             <Input
               id="new-password"
               type="password"
               minLength={8}
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
-              placeholder="Minimum 8 characters"
+              placeholder="Minimal 8 karakter"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirm-new-password">Confirm new password</Label>
+            <Label htmlFor="confirm-new-password">Konfirmasi Password baru</Label>
             <Input
               id="confirm-new-password"
               type="password"
               minLength={8}
               value={confirmNewPassword}
               onChange={(event) => setConfirmNewPassword(event.target.value)}
-              placeholder="Retype the password"
+              placeholder="Ketik ulang Password"
               required
             />
           </div>
 
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Updating..." : "Change password"}
+          <Button type="submit" disabled={isSubmitting} variant="success">
+            {isSubmitting ? "Memperbarui..." : "Ubah Password"}
           </Button>
         </form>
       </CardContent>

@@ -66,25 +66,25 @@ export function LeadsTable({ leads, sortField, sortDirection, onSort }: LeadsTab
             onClick={() => onSort("customer_name")}
           >
             <div className="flex items-center">
-              Nama Lembaga / Customer
+              Customer Name
               <SortIcon field="customer_name" sortField={sortField} sortDirection={sortDirection} />
             </div>
           </TableHead>
           <TableHead>PIC / Contact</TableHead>
           <TableHead>Segment</TableHead>
-          <TableHead>Channel / Sumber Leads</TableHead>
-          <TableHead>Kebutuhan / Deskripsi</TableHead>
-          <TableHead>Permintaan (Nama Tender)</TableHead>
+          <TableHead>Channel / Lead Source</TableHead>
+          <TableHead>Needs / Description</TableHead>
+          <TableHead>Request (Tender Name)</TableHead>
           <TableHead
             className="cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
             onClick={() => onSort("project_value_m")}
           >
             <div className="flex items-center">
-              Nilai Proyek (HPS)
+              Project Value (HPS)
               <SortIcon field="project_value_m" sortField={sortField} sortDirection={sortDirection} />
             </div>
           </TableHead>
-          <TableHead>Status Tender</TableHead>
+          <TableHead>Tender Status</TableHead>
           <TableHead>Created At</TableHead>
         </TableRow>
       </TableHeader>

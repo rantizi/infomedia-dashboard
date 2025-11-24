@@ -36,7 +36,7 @@ export const sidebarItems: NavGroup[] = [
         icon: TrendingUp,
       },
       {
-        title: "Add data",
+        title: "Add Data",
         url: "/add-data",
         icon: UploadCloud,
       },

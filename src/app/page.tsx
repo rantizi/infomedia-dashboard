@@ -2,10 +2,35 @@ import Image from "next/image";
 import Link from "next/link";
 
 import Aurora from "@/components/Aurora";
+import { Button } from "@/components/ui/button";
+import { createServerClient } from "@/lib/supabase";
 
 const auroraColors = ["#FFD700", "#60A5FA", "#EF4444"];
 
-export default function HomePage() {
+async function getUserDisplayName(): Promise<string | null> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return null;
+    }
+
+    const { data: profileRow } = await supabase.from("users").select("full_name").eq("id", user.id).maybeSingle();
+
+    return profileRow?.full_name ?? (user.user_metadata?.full_name as string | undefined) ?? user.email ?? null;
+  } catch {
+    // On error or missing env, fall back to unauthenticated rendering.
+    return null;
+  }
+}
+
+export default async function HomePage() {
+  const userName = await getUserDisplayName();
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-white text-slate-900">
       <div className="pointer-events-none absolute inset-0 opacity-100">
@@ -28,18 +53,24 @@ export default function HomePage() {
               <span className="text-lg font-semibold tracking-tight text-slate-900">Infomedia</span>
             </Link>
             <nav className="flex items-center gap-3 text-sm font-semibold text-slate-900">
-              <Link
-                className="rounded-full border border-slate-200 px-4 py-2 transition hover:border-slate-300 hover:bg-slate-50"
-                href="/login"
-              >
-                Login
-              </Link>
-              <Link
-                className="rounded-full border border-slate-200 px-4 py-2 transition hover:border-slate-300 hover:bg-slate-50"
-                href="/signup"
-              >
-                Sign Up
-              </Link>
+              {userName ? (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-full border-red-200 bg-red-50 px-4 py-2 text-red-700 hover:bg-red-100 hover:text-red-800 focus-visible:ring-red-500 dark:border-red-900 dark:bg-red-900/50 dark:text-red-100 dark:hover:bg-red-900/70"
+                >
+                  <Link href="/dashboard">Halo, {userName}</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild size="sm" variant="success" className="rounded-full px-4">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="success" className="rounded-full px-4">
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
             </nav>
           </div>
         </header>
@@ -58,12 +89,12 @@ export default function HomePage() {
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:translate-y-[-1px] hover:bg-slate-800 hover:shadow-xl"
-              href="/dashboard"
+            <Button
+              asChild
+              className="rounded-full px-7 py-3 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
             >
-              Get Started
-            </Link>
+              <Link href="/dashboard">Mulai Sekarang</Link>
+            </Button>
           </div>
         </section>
       </div>

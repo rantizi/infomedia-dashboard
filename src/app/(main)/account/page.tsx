@@ -12,7 +12,7 @@ type AccountInfo = {
 };
 
 function formatLastSignIn(value: string | null | undefined): string {
-  if (!value) return "Not available";
+  if (!value) return "Tidak tersedia";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -72,8 +72,8 @@ export default async function AccountPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
-        <p className="text-muted-foreground text-sm">Manage your account settings and preferences.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Akun</h1>
+        <p className="text-muted-foreground text-sm">Kelola pengaturan dan preferensi akun Anda.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">

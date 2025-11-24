@@ -32,7 +32,7 @@ export default async function MainLayout({ children }: Readonly<{ children: Reac
   }
 
   const userData = {
-    name: user.user_metadata?.full_name ?? user.email ?? "User",
+    name: user.user_metadata?.full_name ?? user.email ?? "Pengguna",
     email: user.email ?? "",
     avatar: user.user_metadata?.avatar_url ?? "",
   };

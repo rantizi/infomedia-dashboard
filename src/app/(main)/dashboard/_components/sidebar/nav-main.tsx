@@ -24,6 +24,7 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { type NavGroup, type NavMainItem } from "@/navigation/sidebar/sidebar-items";
 
 interface NavMainProps {
@@ -31,7 +32,7 @@ interface NavMainProps {
 }
 
 const IsComingSoon = () => (
-  <span className="ml-auto rounded-md bg-gray-200 px-2 py-1 text-xs dark:text-gray-800">Soon</span>
+  <span className="ml-auto rounded-md bg-gray-200 px-2 py-1 text-xs dark:text-gray-800">Segera</span>
 );
 
 const NavItemExpanded = ({
@@ -43,6 +44,11 @@ const NavItemExpanded = ({
   isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
   isSubmenuOpen: (subItems?: NavMainItem["subItems"]) => boolean;
 }) => {
+  const active = isActive(item.url, item.subItems);
+  const emphasisClasses =
+    "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-100 focus-visible:ring-red-500/40";
+  const mainButtonClasses = cn(!active && "text-muted-foreground", emphasisClasses);
+
   return (
     <Collapsible key={item.title} asChild defaultOpen={isSubmenuOpen(item.subItems)} className="group/collapsible">
       <SidebarMenuItem>
@@ -50,7 +56,8 @@ const NavItemExpanded = ({
           {item.subItems ? (
             <SidebarMenuButton
               disabled={item.comingSoon}
-              isActive={isActive(item.url, item.subItems)}
+              isActive={active}
+              className={mainButtonClasses}
               tooltip={item.title}
             >
               {item.icon && <item.icon />}
@@ -62,7 +69,8 @@ const NavItemExpanded = ({
             <SidebarMenuButton
               asChild
               aria-disabled={item.comingSoon}
-              isActive={isActive(item.url)}
+              isActive={active}
+              className={mainButtonClasses}
               tooltip={item.title}
             >
               <Link href={item.url} target={item.newTab ? "_blank" : undefined}>
@@ -78,7 +86,12 @@ const NavItemExpanded = ({
             <SidebarMenuSub>
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.title}>
-                  <SidebarMenuSubButton aria-disabled={subItem.comingSoon} isActive={isActive(subItem.url)} asChild>
+                  <SidebarMenuSubButton
+                    aria-disabled={subItem.comingSoon}
+                    isActive={isActive(subItem.url)}
+                    asChild
+                    className={cn(!isActive(subItem.url) && "text-muted-foreground")}
+                  >
                     <Link href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
                       {subItem.icon && <subItem.icon />}
                       <span>{subItem.title}</span>
@@ -102,6 +115,11 @@ const NavItemCollapsed = ({
   item: NavMainItem;
   isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
 }) => {
+  const active = isActive(item.url, item.subItems);
+  const emphasisClasses =
+    "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-100 focus-visible:ring-red-500/40";
+  const mainButtonClasses = cn(!active && "text-muted-foreground", emphasisClasses);
+
   return (
     <SidebarMenuItem key={item.title}>
       <DropdownMenu>
@@ -109,7 +127,8 @@ const NavItemCollapsed = ({
           <SidebarMenuButton
             disabled={item.comingSoon}
             tooltip={item.title}
-            isActive={isActive(item.url, item.subItems)}
+            isActive={active}
+            className={mainButtonClasses}
           >
             {item.icon && <item.icon />}
             <span>{item.title}</span>
@@ -119,15 +138,19 @@ const NavItemCollapsed = ({
         <DropdownMenuContent className="w-50 space-y-1" side="right" align="start">
           {item.subItems?.map((subItem) => (
             <DropdownMenuItem key={subItem.title} asChild>
+              {/* Only used in collapsed sidebar; keep focus ring neutral */}
               <SidebarMenuSubButton
                 key={subItem.title}
                 asChild
-                className="focus-visible:ring-0"
+                className={cn(
+                  "focus-visible:!border-transparent focus-visible:!ring-0",
+                  !isActive(subItem.url) && "text-muted-foreground",
+                )}
                 aria-disabled={subItem.comingSoon}
                 isActive={isActive(subItem.url)}
               >
                 <Link href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
-                  {subItem.icon && <subItem.icon className="[&>svg]:text-sidebar-foreground" />}
+                  {subItem.icon && <subItem.icon />}
                   <span>{subItem.title}</span>
                   {subItem.comingSoon && <IsComingSoon />}
                 </Link>
@@ -166,13 +189,19 @@ export function NavMain({ items }: NavMainProps) {
                 if (state === "collapsed" && !isMobile) {
                   // If no subItems, just render the button as a link
                   if (!item.subItems) {
+                    const active = isItemActive(item.url);
+                    const emphasisClasses =
+                      "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-100 focus-visible:ring-red-500/40";
+                    const mainButtonClasses = cn(!active && "text-muted-foreground", emphasisClasses);
+
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           asChild
                           aria-disabled={item.comingSoon}
                           tooltip={item.title}
-                          isActive={isItemActive(item.url)}
+                          isActive={active}
+                          className={mainButtonClasses}
                         >
                           <Link href={item.url} target={item.newTab ? "_blank" : undefined}>
                             {item.icon && <item.icon />}

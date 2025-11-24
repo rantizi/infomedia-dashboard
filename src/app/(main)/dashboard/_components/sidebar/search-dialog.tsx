@@ -18,7 +18,7 @@ export function SearchDialog() {
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        <span className="ml-2">Search</span>
+        <span className="ml-2">Cari</span>
         <kbd className="bg-muted ml-2 inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[10px] font-medium select-none">
           <span className="text-xs">Ctrl</span>
           <span>+</span>

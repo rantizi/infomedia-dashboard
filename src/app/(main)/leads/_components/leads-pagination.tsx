@@ -17,17 +17,17 @@ export function LeadsPagination({ page, totalPages, startIndex, endIndex, total,
   return (
     <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
       <div className="text-sm text-slate-600 dark:text-slate-400">
-        Menampilkan {startIndex}–{endIndex} dari {total} Leads
+        Menampilkan {startIndex}-{endIndex} dari {total} Leads
       </div>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page === 1}>
-          Previous
+          Sebelumnya
         </Button>
         <span className="text-sm text-slate-600 dark:text-slate-400">
           Halaman {page} dari {totalPages}
         </span>
         <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
-          Next
+          Berikutnya
         </Button>
       </div>
     </div>

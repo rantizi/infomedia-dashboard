@@ -42,7 +42,7 @@ const parseExcelFile = async (file: File): Promise<ParsedData> => {
   const firstSheetName = workbook.SheetNames[0];
 
   if (!firstSheetName) {
-    throw new Error("No sheets found in this Excel file.");
+    throw new Error("Tidak ada sheet pada file Excel ini.");
   }
 
   const worksheet = workbook.Sheets[firstSheetName];
@@ -101,7 +101,7 @@ export default function AddDataPage() {
 
     const extension = getFileExtension(file.name);
     if (!ACCEPTED_EXTENSIONS.has(extension)) {
-      setParseError("Unsupported file type. Please upload a .csv, .xls, or .xlsx file.");
+      setParseError("Format file tidak didukung. Silakan Upload File .csv, .xls, atau .xlsx.");
       return;
     }
 
@@ -115,7 +115,7 @@ export default function AddDataPage() {
       setColumns(derivedColumns);
       setRows(parsed.rows);
     } catch (error) {
-      setParseError(error instanceof Error ? error.message : "Failed to parse file. Please try again.");
+      setParseError(error instanceof Error ? error.message : "Gagal membaca file. Coba lagi.");
       setFile(null);
     } finally {
       setIsParsing(false);
@@ -125,7 +125,7 @@ export default function AddDataPage() {
   // eslint-disable-next-line complexity
   const handleProcess = async () => {
     if (!file) {
-      setError("Please upload a file before processing.");
+      setError("Silakan Upload File terlebih dahulu sebelum memproses.");
       return;
     }
 
@@ -152,18 +152,18 @@ export default function AddDataPage() {
 
       if (!response.ok) {
         const errorMessage =
-          payload?.error ?? payload?.message ?? "Failed to process file. Please try again or contact admin.";
+          payload?.error ?? payload?.message ?? "Gagal memproses file. Coba lagi atau hubungi admin.";
         setError(errorMessage);
         return;
       }
 
       const successMessage =
         payload?.message ??
-        "File successfully sent for processing. You can continue working while we clean and sync the data.";
+        "File berhasil dikirim untuk diproses. Anda bisa lanjut bekerja sementara kami membersihkan dan menyinkronkan data.";
 
       setSuccess(payload?.importId ? `${successMessage} (Import ID: ${payload.importId})` : successMessage);
     } catch {
-      setError("Failed to process file. Please try again or contact admin.");
+      setError("Gagal memproses file. Coba lagi atau hubungi admin.");
     } finally {
       setIsProcessing(false);
     }
@@ -171,16 +171,16 @@ export default function AddDataPage() {
 
   const renderPreview = () => {
     if (isParsing) {
-      return <p className="text-muted-foreground text-sm">Parsing file, please wait...</p>;
+      return <p className="text-muted-foreground text-sm">Sedang memproses file, mohon tunggu...</p>;
     }
 
     if (rows.length === 0) {
-      return <p className="text-muted-foreground text-sm">No rows found in this file.</p>;
+      return <p className="text-muted-foreground text-sm">Tidak ada baris data pada file ini.</p>;
     }
 
     return (
       <div className="border-border bg-card overflow-x-auto rounded-lg border shadow-sm">
-        <table className="divide-border min-w-full divide-y text-sm" aria-label="Parsed file preview">
+        <table className="divide-border min-w-full divide-y text-sm" aria-label="Pratinjau hasil pemrosesan file">
           <thead className="bg-muted/50">
             <tr>
               {columns.map((column) => (
@@ -213,17 +213,17 @@ export default function AddDataPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h1 className="page-title">Add data file</h1>
+        <h1 className="page-title">Add Data File</h1>
         <p className="page-subtitle">
-          Upload CSV or Excel files to prepare them for cleaning and syncing into the Infomedia Sales Funnel dashboard.
+          Upload File CSV atau Excel untuk disiapkan, dibersihkan, dan disinkronkan ke Dashboard Infomedia Sales Funnel.
         </p>
       </header>
 
       <section className="space-y-4">
         <div role="button" tabIndex={0} className="upload-card" onClick={openFilePicker} onKeyDown={handleKeyDown}>
           <span className="upload-plus">+</span>
-          <p className="text-base font-medium text-black">Click to add a CSV/Excel file</p>
-          <p className="upload-note">We support .csv and .xlsx</p>
+          <p className="text-base font-medium text-black">Klik untuk Upload File CSV/Excel</p>
+          <p className="upload-note">Kami mendukung .csv dan .xlsx</p>
         </div>
 
         <input
@@ -232,14 +232,14 @@ export default function AddDataPage() {
           className="sr-only"
           accept=".csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={handleFileChange}
-          aria-label="Upload CSV or Excel file"
+          aria-label="Upload File CSV atau Excel"
         />
 
         {hasStatusMessage && (
           <div className="space-y-1">
             {fileName && (
               <p className="upload-file-name" aria-live="polite">
-                Selected file: {fileName}
+                File dipilih: {fileName}
               </p>
             )}
             {parseError && (
@@ -263,8 +263,10 @@ export default function AddDataPage() {
         {hasPreviewContent && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-foreground text-lg font-semibold">Preview (first 50 rows)</h2>
-              {isParsing && <span className="text-muted-foreground text-sm">Parsing file, please wait...</span>}
+              <h2 className="text-foreground text-lg font-semibold">Pratinjau (50 baris pertama)</h2>
+              {isParsing && (
+                <span className="text-muted-foreground text-sm">Sedang memproses file, mohon tunggu...</span>
+              )}
             </div>
             {renderPreview()}
           </div>
@@ -272,7 +274,7 @@ export default function AddDataPage() {
 
         <div className="space-y-2">
           <label className="text-foreground block text-sm font-medium" htmlFor="division-select">
-            Source division
+            Divisi sumber
           </label>
           <select
             id="division-select"
@@ -287,13 +289,18 @@ export default function AddDataPage() {
             ))}
           </select>
           <p className="text-muted-foreground text-xs">
-            Choose the division that provided this file. This tags the import and drives downstream cleaning rules.
+            Pilih divisi pemberi file. Ini menandai impor dan menentukan aturan pembersihan berikutnya.
           </p>
         </div>
 
         <div className="space-y-2">
-          <Button onClick={handleProcess} disabled={isProcessButtonDisabled} aria-label="Process and sync file">
-            {isProcessing ? "Processing..." : "Process & Sync to Database"}
+          <Button
+            variant="success"
+            onClick={handleProcess}
+            disabled={isProcessButtonDisabled}
+            aria-label="Proses dan sinkronkan file"
+          >
+            {isProcessing ? "Sedang memproses..." : "Proses & Sinkron ke Database"}
           </Button>
         </div>
       </section>

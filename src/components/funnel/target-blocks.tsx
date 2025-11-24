@@ -68,7 +68,7 @@ export function TargetBlocks({ targets, segments, activeSegment }: TargetBlocksP
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Targets</h2>
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Target</h2>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/80 p-1 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
         <div className="min-w-[900px]">

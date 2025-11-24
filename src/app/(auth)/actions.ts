@@ -18,7 +18,7 @@ export async function signIn(_prevState: AuthFormState | undefined, formData: Fo
   // Validate inputs
   if (!email || !password) {
     console.log("[signIn] Validation failed: missing email or password");
-    return { error: "Please enter both your email and password." };
+    return { error: "Mohon isi Email dan Password Anda." };
   }
 
   // Create server-side Supabase client
@@ -52,7 +52,7 @@ export async function signUp(_prevState: AuthFormState | undefined, formData: Fo
   // Validate inputs
   if (!email || !password) {
     console.log("[signUp] Validation failed: missing email or password");
-    return { error: "Please enter both your email and password." };
+    return { error: "Mohon isi Email dan Password Anda." };
   }
 
   // Create server-side Supabase client

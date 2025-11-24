@@ -20,9 +20,9 @@ const optionalField = z
   .transform((val) => (val === "" ? undefined : val));
 
 const signupSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  full_name: z.string().trim().min(1, "Full name is required"),
+  email: z.string().email("Masukkan Email yang valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+  full_name: z.string().trim().min(1, "Nama lengkap wajib diisi"),
   phone: optionalField,
   job_title: optionalField,
   division: divisionEnum,
@@ -68,7 +68,7 @@ export default function SignupPage() {
 
       const userId = data.user?.id;
       if (!userId) {
-        setErrorMessage("User was created but no user id was returned from Supabase.");
+        setErrorMessage("User berhasil dibuat tetapi tidak ada user id yang diterima dari Supabase.");
         setStatus("error");
         return;
       }
@@ -88,14 +88,14 @@ export default function SignupPage() {
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        setErrorMessage(payload?.error ?? "Failed to mirror profile.");
+        setErrorMessage(payload?.error ?? "Gagal menyinkronkan profil.");
         setStatus("error");
         return;
       }
 
       setStatus("success");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Something went wrong.";
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
       setErrorMessage(message);
       setStatus("error");
     }
@@ -108,9 +108,10 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-xl rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
         <div className="mb-6 space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Create your account</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Buat akun Anda</h1>
           <p className="text-sm text-slate-600">
-            Join the dashboard. We&apos;ll send a verification email before you can access protected content.
+            Bergabunglah dengan Dashboard. Kami akan mengirim Email verifikasi sebelum Anda dapat mengakses konten yang
+            terlindungi.
           </p>
         </div>
 
@@ -138,26 +139,26 @@ export default function SignupPage() {
                 required
                 minLength={8}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0"
-                placeholder="At least 8 characters"
+                placeholder="Minimal 8 karakter"
               />
               {errors.password && <span className="text-xs text-red-600">{errors.password.message}</span>}
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 sm:col-span-2">
-              Full name
+              Nama lengkap
               <input
                 {...register("full_name")}
                 type="text"
                 autoComplete="name"
                 required
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0"
-                placeholder="Your full name"
+                placeholder="Nama lengkap Anda"
               />
               {errors.full_name && <span className="text-xs text-red-600">{errors.full_name.message}</span>}
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-              Phone (optional)
+              Nomor telepon (opsional)
               <input
                 {...register("phone")}
                 type="tel"
@@ -169,7 +170,7 @@ export default function SignupPage() {
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-              Job title (optional)
+              Jabatan (opsional)
               <input
                 {...register("job_title")}
                 type="text"
@@ -180,7 +181,7 @@ export default function SignupPage() {
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 sm:col-span-2">
-              Division
+              Divisi
               <select
                 {...register("division")}
                 required
@@ -205,23 +206,24 @@ export default function SignupPage() {
           {/* Protected routes should gate access on email_verified when the user returns after email confirmation. */}
           {status === "success" && (
             <div className="rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-800">
-              Check your email to verify account. Access to protected areas should check <code>email_verified</code>.
+              Periksa Email Anda untuk verifikasi akun. Akses ke area terbatas harus memeriksa{" "}
+              <code>email_verified</code>.
             </div>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-green-300 dark:bg-green-600 dark:hover:bg-green-500"
           >
-            {isSubmitting ? "Signing up..." : "Sign up"}
+            {isSubmitting ? "Sedang Sign Up..." : "Sign Up"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Already have an account?{" "}
+          Sudah punya akun?{" "}
           <Link href="/login" className="font-semibold text-slate-900 hover:underline">
-            Sign in
+            Login
           </Link>
         </p>
       </div>

@@ -90,3 +90,5 @@ A web dashboard for Marketing, Sales, MSDC, and Bidding to upload Excel/CSV, run
 ## 11. Timeline & Costs (Pilot)
 
 Vercel Hobby + Supabase Free + Cron = Rp0 monthly; domain ~Rp200k/year; documented upgrade path.
+
+hence you think that you can hurt me no you cant no know what you do

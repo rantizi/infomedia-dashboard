@@ -264,7 +264,7 @@ html {
   height: 48px;
   border: none;
   border-radius: 999px;
-  background: #111111;
+  background: #22c55e;
   color: #ffffff;
   font-weight: 600;
   font-size: 1rem;
@@ -276,13 +276,20 @@ html {
 }
 
 .auth-button:hover:not(:disabled) {
-  background: #1f1f1f;
-  box-shadow: 0 12px 24px rgba(17, 17, 17, 0.12);
+  background: #16a34a;
+  box-shadow: 0 12px 24px rgba(22, 163, 74, 0.18);
   transform: translateY(-1px);
 }
 
 .auth-button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.auth-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.25),
+    0 10px 30px rgba(22, 163, 74, 0.18);
 }
 
 .auth-button:disabled {

@@ -101,11 +101,13 @@ void main() {
   height = exp(height);
   height = (uv.y * 2.0 - height + 0.2);
   float intensity = 0.6 * height;
+  intensity = max(intensity, 0.08);
   
   float midPoint = 0.20;
   float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity);
   
-  vec3 auroraColor = intensity * rampColor;
+  float baseGlow = 0.1;
+  vec3 auroraColor = (intensity + baseGlow) * rampColor;
   
   fragColor = vec4(auroraColor * auroraAlpha, auroraAlpha);
 }
@@ -117,6 +119,7 @@ export default function Aurora(props) {
     amplitude = 1.0,
     blend = 0.5,
     speed = 1.0,
+    backgroundColor = "#f9a8d4",
     time,
   } = props ?? {};
 
@@ -125,9 +128,10 @@ export default function Aurora(props) {
     amplitude,
     blend,
     speed,
+    backgroundColor,
     time,
   });
-  propsRef.current = { colorStops, amplitude, blend, speed, time };
+  propsRef.current = { colorStops, amplitude, blend, speed, backgroundColor, time };
 
   const ctnDom = useRef(null);
 
@@ -141,10 +145,11 @@ export default function Aurora(props) {
       antialias: true,
     });
     const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
+    const bgColor = new Color(backgroundColor);
+    gl.clearColor(bgColor.r, bgColor.g, bgColor.b, 1);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.canvas.style.backgroundColor = "transparent";
+    gl.canvas.style.backgroundColor = backgroundColor;
 
     let program;
 
@@ -212,7 +217,7 @@ export default function Aurora(props) {
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amplitude]);
+  }, [amplitude, backgroundColor]);
 
   return <div ref={ctnDom} className="absolute inset-0 h-full w-full overflow-hidden" aria-hidden="true" />;
 }

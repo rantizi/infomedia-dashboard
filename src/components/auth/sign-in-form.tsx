@@ -12,7 +12,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button className="auth-button" type="submit" disabled={pending} aria-busy={pending}>
-      {pending ? "Signing you in..." : "Sign in"}
+      {pending ? "Sedang Login..." : "Login"}
     </button>
   );
 }
@@ -23,14 +23,14 @@ export function SignInForm() {
   return (
     <div className="auth-card">
       <div className="auth-card-header">
-        <h2 className="auth-title">Welcome back</h2>
-        <p className="auth-subtitle">Sign in to monitor the sales funnel and KPIs.</p>
+        <h2 className="auth-title">Selamat datang kembali</h2>
+        <p className="auth-subtitle">Login untuk memantau sales funnel dan KPI.</p>
       </div>
 
       <form className="auth-form" action={formAction}>
         <div className="auth-input-group">
           <label className="auth-label" htmlFor="email">
-            Email address
+            Alamat Email
           </label>
           <input
             id="email"
@@ -49,7 +49,7 @@ export function SignInForm() {
               Password
             </label>
             <Link className="auth-link auth-link-small" href="#">
-              Forgot password?
+              Lupa Password?
             </Link>
           </div>
           <input
@@ -76,9 +76,9 @@ export function SignInForm() {
       <div className="auth-divider" />
 
       <p className="auth-meta-link">
-        Don&rsquo;t have an account?{" "}
+        Belum punya akun?{" "}
         <Link className="auth-link" href="/signup">
-          Sign up
+          Sign Up
         </Link>
       </p>
     </div>

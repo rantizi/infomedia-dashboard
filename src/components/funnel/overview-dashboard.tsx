@@ -94,7 +94,7 @@ export function OverviewDashboard() {
         const json = (await response.json().catch(() => null)) as FunnelApiResponse | { error?: string } | null;
         if (!response.ok || (json && "error" in json && json?.error)) {
           const message = json && "error" in json && json.error ? json.error : response.statusText;
-          throw new Error(message || "Failed to fetch funnel data");
+          throw new Error(message || "Gagal mengambil data funnel");
         }
 
         const payload = (json as FunnelApiResponse | null)?.data ?? [];
@@ -104,7 +104,7 @@ export function OverviewDashboard() {
         setError(null);
       } catch (err) {
         if (!isActive) return;
-        const message = err instanceof Error ? err.message : "Failed to fetch funnel data";
+        const message = err instanceof Error ? err.message : "Gagal mengambil data funnel";
         setError(message);
         setData([]);
       } finally {
@@ -138,7 +138,7 @@ export function OverviewDashboard() {
         const json = (await response.json().catch(() => null)) as LopTargetsApiResponse | { error?: string } | null;
         if (!response.ok || (json && "error" in json && json?.error)) {
           const message = json && "error" in json && json.error ? json.error : response.statusText;
-          throw new Error(message || "Failed to fetch target & LOP data");
+          throw new Error(message || "Gagal mengambil data target & LOP");
         }
 
         if (!isActive) return;
@@ -146,7 +146,7 @@ export function OverviewDashboard() {
         setLopError(null);
       } catch (err) {
         if (!isActive) return;
-        const message = err instanceof Error ? err.message : "Failed to fetch target & LOP data";
+        const message = err instanceof Error ? err.message : "Gagal mengambil data target & LOP";
         setLopError(message);
         setLopTargets([]);
       } finally {
@@ -207,7 +207,7 @@ export function OverviewDashboard() {
     if (isLoading) {
       return (
         <div className="rounded-xl border border-slate-200/60 bg-white/70 px-4 py-6 text-sm text-slate-600 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60 dark:text-slate-300">
-          Loading funnel data...
+          Memuat data funnel...
         </div>
       );
     }
@@ -235,7 +235,7 @@ export function OverviewDashboard() {
     if (lopLoading) {
       return (
         <div className="rounded-xl border border-slate-200/60 bg-white/70 px-4 py-6 text-sm text-slate-600 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60 dark:text-slate-300">
-          Loading targets & LOP...
+          Memuat target & LOP...
         </div>
       );
     }
@@ -270,7 +270,7 @@ export function OverviewDashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Overview</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Sales funnel dashboard for Infomedia</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Dashboard funnel penjualan untuk Infomedia</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-3">
           <SegmentTabs value={selectedSegment} segments={orderedSegments} onValueChange={setSelectedSegment} />

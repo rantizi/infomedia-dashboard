@@ -208,9 +208,9 @@ export default function LeadsPageClient() {
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">MSDC Leads</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Leads MSDC</h1>
         <p className="text-muted-foreground text-sm">
-          Single view untuk seluruh Leads MSDC yang sudah di-cleaning dan diperkaya data tender.
+          Tampilan terpadu untuk seluruh Leads MSDC yang sudah dibersihkan dan diperkaya data tender.
         </p>
       </div>
 

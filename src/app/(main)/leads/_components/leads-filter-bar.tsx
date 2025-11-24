@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All" },
+  { value: "all", label: "Semua" },
   { value: "Open", label: "Open" },
   { value: "Sedang Berjalan", label: "Sedang Berjalan" },
   { value: "Selesai", label: "Selesai" },
@@ -53,7 +53,7 @@ export function LeadsFilterBar({
 
         <div className="flex items-center gap-2">
           <label htmlFor="search-input" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Search:
+            Cari:
           </label>
           <Input
             id="search-input"
@@ -67,7 +67,7 @@ export function LeadsFilterBar({
 
         <div className="flex items-center gap-2">
           <label htmlFor="page-size" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Per page:
+            Per halaman:
           </label>
           <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value, 10))}>
             <SelectTrigger id="page-size" className="w-[100px]">

@@ -3,12 +3,12 @@ import packageJson from "../../package.json";
 const currentYear = new Date().getFullYear();
 
 export const APP_CONFIG = {
-  name: "infomedia nusantara",
+  name: "Infomedia Nusantara",
   version: packageJson.version,
-  copyright: `© ${currentYear}, infomedia nusantara.`,
+  copyright: `(c) ${currentYear}, Infomedia Nusantara.`,
   meta: {
-    title: "infomedia nusantara dashboard",
+    title: "Infomedia Nusantara Dashboard",
     description:
-      "infomedia nusantara dashboard powered by Next.js 16, Tailwind CSS, and shadcn/ui for the Infomedia funnel experience.",
+      "Infomedia Nusantara dashboard powered by Next.js 16, Tailwind CSS, and shadcn/ui for the Infomedia funnel experience.",
   },
 };

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     console.error("Failed to fetch auth user for mirror:", adminError);
   }
 
-  const emailVerified = Boolean(adminUser?.user?.email_confirmed_at);
+  const emailVerified = Boolean(adminUser.user?.email_confirmed_at);
 
   const { error: userUpsertError } = await supabase.from("users").upsert(
     [

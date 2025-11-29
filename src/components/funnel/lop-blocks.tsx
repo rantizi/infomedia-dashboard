@@ -1,7 +1,10 @@
 /* eslint-disable security/detect-object-injection */
 
+import { formatToBillionM } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import type { LopTargetRow } from "@/types/funnel";
+
+import { isValidSegment } from "./segment-utils";
 
 interface LopBlocksProps {
   targets: LopTargetRow[];
@@ -39,11 +42,6 @@ const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
 const normalizeSegment = (segment: string): string => {
   const normalized = segment.trim().toLowerCase();
   return SEGMENT_NORMALIZATION_MAP[normalized] ?? normalized;
-};
-
-const formatValueM = (value: number): string => {
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return `${safeValue.toLocaleString("id-ID", { maximumFractionDigits: 0 })} M`;
 };
 
 const formatPercent = (value: number | null): string => {
@@ -137,7 +135,7 @@ function LopBlock({ title, kind, segments, targetLookup, activeSegment }: LopBlo
                       isActive && "text-blue-700 dark:text-blue-100",
                     )}
                   >
-                    {formatValueM(getLopValue(segment))}
+                    {formatToBillionM(getLopValue(segment))}
                   </div>
                 </div>
               );
@@ -216,7 +214,9 @@ function LopBlock({ title, kind, segments, targetLookup, activeSegment }: LopBlo
 }
 
 export function LopBlocks({ targets, segments, activeSegment }: LopBlocksProps) {
-  const targetLookup = new Map<string, LopTargetRow>(targets.map((row) => [normalizeSegment(row.segment), row]));
+  const targetLookup = new Map<string, LopTargetRow>(
+    targets.filter((row) => isValidSegment(row.segment)).map((row) => [normalizeSegment(row.segment), row]),
+  );
 
   return (
     <div className="space-y-6">

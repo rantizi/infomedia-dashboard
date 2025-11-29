@@ -31,10 +31,11 @@ export default async function MainLayout({ children }: Readonly<{ children: Reac
     redirect("/login");
   }
 
+  const metadata = user.user_metadata as Record<string, unknown>;
   const userData = {
-    name: user.user_metadata?.full_name ?? user.email ?? "Pengguna",
+    name: (metadata.full_name as string | undefined) ?? user.email ?? "Pengguna",
     email: user.email ?? "",
-    avatar: user.user_metadata?.avatar_url ?? "",
+    avatar: (metadata.avatar_url as string | undefined) ?? "",
   };
 
   const [sidebarVariant, sidebarCollapsible, contentLayout, navbarStylePref] = await Promise.all([

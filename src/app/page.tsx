@@ -21,7 +21,9 @@ async function getUserDisplayName(): Promise<string | null> {
 
     const { data: profileRow } = await supabase.from("users").select("full_name").eq("id", user.id).maybeSingle();
 
-    return profileRow?.full_name ?? (user.user_metadata?.full_name as string | undefined) ?? user.email ?? null;
+    const metadata = user.user_metadata as Record<string, unknown>;
+
+    return profileRow?.full_name ?? (metadata.full_name as string | undefined) ?? user.email ?? null;
   } catch {
     // On error or missing env, fall back to unauthenticated rendering.
     return null;

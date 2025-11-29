@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 
+import { Inbox, UploadCloud } from "lucide-react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
@@ -11,6 +12,8 @@ type ParsedData = {
   columns: string[];
   rows: Record<string, unknown>[];
 };
+
+type PreviewRow = Record<string, unknown> & { rowId: string };
 
 type SourceDivision = "BIDDING" | "MSDC" | "SALES" | "MARKETING" | "OTHER";
 
@@ -45,7 +48,12 @@ const parseExcelFile = async (file: File): Promise<ParsedData> => {
     throw new Error("Tidak ada sheet pada file Excel ini.");
   }
 
-  const worksheet = workbook.Sheets[firstSheetName];
+  const worksheetEntry = Object.entries(workbook.Sheets).find(([name]) => name === firstSheetName);
+  const worksheet = worksheetEntry?.[1];
+  if (!worksheet) {
+    throw new Error("Sheet pertama tidak ditemukan pada file Excel ini.");
+  }
+
   const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: "" });
   const columns = Object.keys(data[0] ?? {});
 
@@ -60,7 +68,7 @@ export default function AddDataPage() {
   const [division, setDivision] = useState<SourceDivision>("SALES");
   const [fileName, setFileName] = useState<string>("");
   const [columns, setColumns] = useState<string[]>([]);
-  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [rows, setRows] = useState<PreviewRow[]>([]);
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -111,9 +119,13 @@ export default function AddDataPage() {
     try {
       const parsed = extension === "csv" ? await parseCsvFile(file) : await parseExcelFile(file);
       const derivedColumns = parsed.columns.length > 0 ? parsed.columns : Object.keys(parsed.rows[0] ?? {});
+      const rowsWithIds: PreviewRow[] = parsed.rows.map((row, index) => ({
+        rowId: `${file.name || "upload"}-${index}-${Date.now()}`,
+        ...row,
+      }));
 
       setColumns(derivedColumns);
-      setRows(parsed.rows);
+      setRows(rowsWithIds);
     } catch (error) {
       setParseError(error instanceof Error ? error.message : "Gagal membaca file. Coba lagi.");
       setFile(null);
@@ -175,8 +187,25 @@ export default function AddDataPage() {
     }
 
     if (rows.length === 0) {
-      return <p className="text-muted-foreground text-sm">Tidak ada baris data pada file ini.</p>;
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200/80 bg-white/70 p-8 text-center shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
+          <Inbox className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+          <p className="text-sm text-slate-600 dark:text-slate-300">Tidak ada baris data pada file ini.</p>
+          <Button variant="outline" size="sm" className="gap-2" onClick={openFilePicker}>
+            <UploadCloud className="h-4 w-4" />
+            Pilih file lain
+          </Button>
+        </div>
+      );
     }
+
+    const getCellValue = (row: PreviewRow, column: string): string => {
+      if (!column) return "";
+      // Safe: column keys are derived from the uploaded file headers and rendered read-only.
+      // eslint-disable-next-line security/detect-object-injection
+      const value = Object.prototype.hasOwnProperty.call(row, column) ? row[column] : "";
+      return String(value ?? "");
+    };
 
     return (
       <div className="border-border bg-card overflow-x-auto rounded-lg border shadow-sm">
@@ -191,11 +220,11 @@ export default function AddDataPage() {
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-muted/30">
+            {rows.map((row) => (
+              <tr key={row.rowId} className="hover:bg-muted/30">
                 {columns.map((column) => (
-                  <td key={`${rowIndex}-${column}`} className="text-foreground px-4 py-2 whitespace-pre-wrap">
-                    {String(row[column] ?? "")}
+                  <td key={`${row.rowId}-${column}`} className="text-foreground px-4 py-2 whitespace-pre-wrap">
+                    {getCellValue(row, column)}
                   </td>
                 ))}
               </tr>

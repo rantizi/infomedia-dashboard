@@ -14,7 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-type UseDataTableInstanceProps<TData, TValue> = {
+type UseDataTableInstanceProps<TData extends { id?: string | number }, TValue> = {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   enableRowSelection?: boolean;
@@ -23,7 +23,7 @@ type UseDataTableInstanceProps<TData, TValue> = {
   getRowId?: (row: TData, index: number) => string;
 };
 
-export function useDataTableInstance<TData, TValue>({
+export function useDataTableInstance<TData extends { id?: string | number }, TValue>({
   data,
   columns,
   enableRowSelection = true,
@@ -40,6 +40,8 @@ export function useDataTableInstance<TData, TValue>({
     pageSize: defaultPageSize ?? 10,
   });
 
+  // TanStack Table exposes imperative helpers that the React Compiler intentionally skips memoizing.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -51,7 +53,12 @@ export function useDataTableInstance<TData, TValue>({
       pagination,
     },
     enableRowSelection,
-    getRowId: getRowId ?? ((row) => (row as any).id.toString()),
+    getRowId:
+      getRowId ??
+      ((row, index) => {
+        const fallbackId = row.id ?? index;
+        return String(fallbackId);
+      }),
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

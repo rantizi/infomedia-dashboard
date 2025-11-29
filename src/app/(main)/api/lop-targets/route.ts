@@ -9,7 +9,7 @@ import type { LopTargetRow, LopTargetsApiResponse } from "@/types/funnel";
  *
  * Reads target + LOP metrics per segment from the Supabase view
  * `vw_lop_vs_target_per_segment` (values already in Millions, no further scaling).
- * Optional query param: `year` (ignored gracefully if the column does not exist).
+ * Required query param: `year` (number).
  */
 
 type RawLopRow = {
@@ -32,7 +32,7 @@ const toNumber = (value: number | string | null | undefined): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const mapRow = (row: RawLopRow): LopTargetRow => {
+const mapRow = (row: RawLopRow, fallbackYear?: number): LopTargetRow => {
   const base: LopTargetRow = {
     segment: row.segment ?? "",
     target_rkap_m: toNumber(row.target_rkap_m),
@@ -44,56 +44,52 @@ const mapRow = (row: RawLopRow): LopTargetRow => {
   const yearValue = row.year !== undefined && row.year !== null ? Number(row.year) : undefined;
   if (yearValue !== undefined && Number.isFinite(yearValue)) {
     base.year = yearValue;
+  } else if (fallbackYear !== undefined) {
+    base.year = fallbackYear;
   }
 
   return base;
 };
 
-// eslint-disable-next-line complexity
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const searchParams = request.nextUrl.searchParams;
   const yearParam = searchParams.get("year");
-  const parsedYear = yearParam ? Number.parseInt(yearParam, 10) : undefined;
-  const year = Number.isFinite(parsedYear) ? parsedYear : undefined;
-  const includeYear = year !== undefined;
+  const parsedYear = yearParam ? Number.parseInt(yearParam, 10) : NaN;
+  const year = Number.isFinite(parsedYear) ? parsedYear : null;
+
+  if (year === null) {
+    return NextResponse.json({ error: "Parameter 'year' wajib diisi sebagai angka." }, { status: 400 });
+  }
 
   try {
     const tenantId = await getActiveTenantId();
     const supabase = await createServerClient();
 
-    const selectWithYear = "segment, target_rkap_m, target_stg_m, kecukupan_lop_m, qualified_lop_m, year";
-    const selectWithoutYear = "segment, target_rkap_m, target_stg_m, kecukupan_lop_m, qualified_lop_m";
+    const { data, error } = await supabase
+      .from(VIEW_NAME)
+      .select("segment, target_rkap_m, target_stg_m, kecukupan_lop_m, qualified_lop_m, year")
+      .eq("tenant_id", tenantId)
+      .eq("year", year)
+      .order("segment", { ascending: true });
 
-    const buildQuery = (selectColumns: string, allowYearFilter: boolean) => {
-      let query = supabase.from(VIEW_NAME).select(selectColumns).eq("tenant_id", tenantId);
-
-      if (allowYearFilter && year !== undefined) {
-        query = query.eq("year", year);
-      }
-
-      return query.order("segment", { ascending: true });
-    };
-
-    const { data, error } = await buildQuery(includeYear ? selectWithYear : selectWithoutYear, includeYear);
-
-    let rows = data as RawLopRow[] | null;
-    let queryError = error;
-
-    if (queryError && includeYear && isMissingYearColumn(queryError.message ?? "")) {
-      const fallback = await buildQuery(selectWithoutYear, false);
-      rows = fallback.data as RawLopRow[] | null;
-      queryError = fallback.error;
+    if (error) {
+      const message = isMissingYearColumn(error.message)
+        ? "Kolom 'year' tidak tersedia di vw_lop_vs_target_per_segment. Perbarui view untuk mendukung filter tahun."
+        : error.message;
+      throw new Error(message);
     }
 
-    if (queryError) {
-      throw queryError;
-    }
-
-    const mapped = (rows ?? []).map(mapRow);
-    return NextResponse.json<LopTargetsApiResponse>({ data: mapped }, { status: 200 });
+    const mapped = (data as RawLopRow[]).map((row) => mapRow(row, year));
+    return NextResponse.json<LopTargetsApiResponse>(
+      { data: mapped, hasData: mapped.length > 0, year },
+      { status: 200 },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
     console.error("[/api/lop-targets] Failed to fetch LOP targets:", message);
-    return NextResponse.json<LopTargetsApiResponse & { error: string }>({ data: [], error: message }, { status: 500 });
+    return NextResponse.json<LopTargetsApiResponse & { error: string }>(
+      { data: [], error: message, hasData: false, year },
+      { status: 500 },
+    );
   }
 }

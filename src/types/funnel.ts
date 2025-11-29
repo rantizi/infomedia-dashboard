@@ -44,8 +44,15 @@ export interface SegmentFunnel {
   year?: number;
 }
 
-export interface FunnelApiResponse {
-  data: SegmentFunnel[];
+export interface FunnelResponse {
+  rows: SegmentFunnel[];
+  year: number;
+  hasData?: boolean;
+}
+
+export interface FunnelApiResponse extends FunnelResponse {
+  // Backward compatibility: some callers still expect `data`
+  data?: SegmentFunnel[];
 }
 
 export type LopTargetRow = {
@@ -59,6 +66,8 @@ export type LopTargetRow = {
 
 export type LopTargetsApiResponse = {
   data: LopTargetRow[];
+  year: number;
+  hasData: boolean;
 };
 
 /**

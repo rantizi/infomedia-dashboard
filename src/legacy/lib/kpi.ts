@@ -45,7 +45,9 @@ export async function getFunnelSummaryForTenant(tenantId: string): Promise<Funne
     throw error;
   }
 
-  return (data ?? []) as FunnelRow[];
+  const safeData: FunnelRow[] = Array.isArray(data) ? (data as FunnelRow[]) : [];
+
+  return safeData;
 }
 
 /**
@@ -64,7 +66,9 @@ export async function getLopTargetsForTenant(tenantId: string, year = 2026): Pro
     throw error;
   }
 
-  return (data ?? []) as LopTargetRow[];
+  const safeData: LopTargetRow[] = Array.isArray(data) ? (data as LopTargetRow[]) : [];
+
+  return safeData;
 }
 
 const SEGMENTS: Segment[] = SEGMENT_ORDER;
@@ -98,29 +102,27 @@ const STAGE_NAME_MAP: Record<string, FunnelStage> = {
 
 const normalize = (value: string | null | undefined): string => (value ?? "").trim().toLowerCase();
 
-const mapSegment = (segmentLabel: string | null | undefined): Segment | null =>
-  SEGMENT_NAME_MAP[normalize(segmentLabel)] ?? null;
+const mapSegment = (segmentLabel: string | null | undefined): Segment | null => {
+  const key = normalize(segmentLabel);
+  // Safe lookup against a fixed dictionary of segments.
+  // eslint-disable-next-line security/detect-object-injection
+  return Object.prototype.hasOwnProperty.call(SEGMENT_NAME_MAP, key) ? SEGMENT_NAME_MAP[key] : null;
+};
 
-const mapStage = (stageLabel: string | null | undefined): FunnelStage | null =>
-  STAGE_NAME_MAP[normalize(stageLabel)] ?? null;
+const mapStage = (stageLabel: string | null | undefined): FunnelStage | null => {
+  const key = normalize(stageLabel);
+  // Safe lookup against a fixed dictionary of funnel stages.
+  // eslint-disable-next-line security/detect-object-injection
+  return Object.prototype.hasOwnProperty.call(STAGE_NAME_MAP, key) ? STAGE_NAME_MAP[key] : null;
+};
 
 const createSegmentRecord = <T>(factory: () => T): Record<Segment, T> =>
-  SEGMENTS.reduce(
-    (acc, segment) => {
-      acc[segment] = factory();
-      return acc;
-    },
-    {} as Record<Segment, T>,
-  );
+  Object.fromEntries(SEGMENTS.map((segment) => [segment, factory()])) as Record<Segment, T>;
 
 const createEmptyFunnelData = (): Funnel2RowsResponse => {
-  const stages = STAGES.reduce(
-    (acc, stage) => {
-      acc[stage] = createSegmentRecord<FunnelCell>(() => ({ valueM: 0, projects: 0 }));
-      return acc;
-    },
-    {} as Funnel2RowsResponse["stages"],
-  );
+  const stages = Object.fromEntries(
+    STAGES.map((stage) => [stage, createSegmentRecord<FunnelCell>(() => ({ valueM: 0, projects: 0 }))]),
+  ) as Funnel2RowsResponse["stages"];
 
   return {
     stages,
@@ -161,6 +163,8 @@ export function buildFunnelDashboardData(funnelRows: FunnelRow[], lopRows: LopTa
       continue;
     }
 
+    // Stage and segment have been normalized into strict enums, safe for index access.
+    // eslint-disable-next-line security/detect-object-injection
     result.stages[stage][segment] = {
       valueM: toNumber(row.total_m),
       projects: Math.round(toNumber(row.project_count)),
@@ -174,13 +178,18 @@ export function buildFunnelDashboardData(funnelRows: FunnelRow[], lopRows: LopTa
       continue;
     }
 
+    // Normalized segment keys ensure deterministic lookups into the typed records.
+    // eslint-disable-next-line security/detect-object-injection
     result.targetRkap[segment] = toNumber(row.target_rkap_m);
+    // eslint-disable-next-line security/detect-object-injection
     result.targetStg[segment] = toNumber(row.target_stg_m);
+    // eslint-disable-next-line security/detect-object-injection
     result.kecukupanLop[segment] = {
       valueM: toNumber(row.kecukupan_lop_m),
       pctRkap: toNumber(row.kecukupan_vs_rkap_pct),
       pctStg: toNumber(row.kecukupan_vs_stg_pct),
     };
+    // eslint-disable-next-line security/detect-object-injection
     result.qualifiedLop[segment] = {
       valueM: toNumber(row.qualified_lop_m),
       pctRkap: toNumber(row.qualified_vs_rkap_pct),

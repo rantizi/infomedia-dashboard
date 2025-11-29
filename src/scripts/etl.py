@@ -43,7 +43,7 @@ def normalize_company(name: str) -> str:
     x = re.sub(r"\bT\s*B\s*K\b\.?", "TBK", x)
     x = re.sub(r"[.,;:/\\]+", " ", x)
     x = re.sub(r"\s+", " ", x).strip()
-    return x
+    return x 
 
 def parse_money(val):
     if pd.isna(val):
@@ -109,7 +109,7 @@ COLUMN_ALIASES = {
     "source_division":["sumber", "divisi_sumber", "source", "asal data", "origin"],
     "funnel_stage":   ["stage", "status", "funnel", "tahap"],
     "est_revenue":    [ "nilai 2026",       # ← PRIORITAS UTAMA
-                        "nilai project",   # fallback kalau tidak ada Nilai 2026
+                        "nilai project",    # fallback kalau tidak ada Nilai 2026
                         "nilai",
                         "value",
                         "amount",

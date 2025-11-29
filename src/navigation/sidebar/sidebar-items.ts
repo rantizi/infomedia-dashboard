@@ -1,4 +1,4 @@
-import { TrendingUp, UploadCloud, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, TrendingUp, UploadCloud, Users, type LucideIcon } from "lucide-react";
 
 export interface NavSubItem {
   title: string;
@@ -44,6 +44,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Leads",
         url: "/leads",
         icon: Users,
+      },
+      {
+        title: "Analytics",
+        url: "/analytics",
+        icon: BarChart3,
       },
     ],
   },

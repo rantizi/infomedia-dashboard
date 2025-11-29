@@ -70,7 +70,7 @@ function useSearchParamsUpdate() {
 
 function getSortValue(lead: MsdcLead, field: SortField): string | number {
   if (field === "customer_name") {
-    return lead.customer_name ?? "";
+    return lead.customer_name;
   }
   if (field === "project_value_m") {
     return lead.project_value_m ?? 0;

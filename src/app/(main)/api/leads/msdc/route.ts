@@ -32,16 +32,19 @@ function applyTextSearch(leads: MsdcLead[], query: string | undefined): MsdcLead
   if (!query) return leads;
   const searchLower = query.toLowerCase();
   return leads.filter((lead) => {
-    const customerMatch = lead.customer_name?.toLowerCase().includes(searchLower) ?? false;
-    const tenderMatch = lead.tender_name?.toLowerCase().includes(searchLower) ?? false;
-    const picMatch = lead.pic?.toLowerCase().includes(searchLower) ?? false;
+    const customer = lead.customer_name;
+    const tender = lead.tender_name;
+    const pic = lead.pic;
+    const customerMatch = typeof customer === "string" ? customer.toLowerCase().includes(searchLower) : false;
+    const tenderMatch = typeof tender === "string" ? tender.toLowerCase().includes(searchLower) : false;
+    const picMatch = typeof pic === "string" ? pic.toLowerCase().includes(searchLower) : false;
     return customerMatch || tenderMatch || picMatch;
   });
 }
 
 function applyLembagaFilter(leads: MsdcLead[], lembaga: string | undefined): MsdcLead[] {
   if (!lembaga) return leads;
-  return leads.filter((lead) => lead.customer_name?.includes(lembaga));
+  return leads.filter((lead) => typeof lead.customer_name === "string" && lead.customer_name.includes(lembaga));
 }
 
 function applyYearFilter(leads: MsdcLead[], year: number | undefined): MsdcLead[] {
@@ -122,8 +125,10 @@ async function fetchLeadsFromSupabase(tenantId: string, params: MsdcLeadsQueryPa
     throw error;
   }
 
+  const safeData: MsdcLead[] = Array.isArray(data) ? (data as MsdcLead[]) : [];
+
   return {
-    data: (data ?? []) as MsdcLead[],
+    data: safeData,
     meta: {
       total: count ?? 0,
       page,

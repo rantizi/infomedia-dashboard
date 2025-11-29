@@ -1,6 +1,9 @@
 /* eslint-disable security/detect-object-injection */
+import { formatToBillionM } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import type { FunnelStage, SegmentFunnel, SegmentStageRecord } from "@/types/funnel";
+
+import { isValidSegment } from "./segment-utils";
 
 interface FunnelTableProps {
   data: SegmentFunnel[];
@@ -9,6 +12,7 @@ interface FunnelTableProps {
 }
 
 const STAGES: FunnelStage[] = ["leads", "prospect", "qualified", "submission", "win"];
+type StageTotal = SegmentStageRecord[FunnelStage];
 
 const stageBadgeBase =
   "inline-flex min-w-[120px] items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold backdrop-blur-sm shadow-sm";
@@ -63,14 +67,30 @@ const STAGE_LABELS: Record<FunnelStage, string> = {
   win: "Win",
 };
 
-const formatValueM = (value: number): string => {
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return `${safeValue.toLocaleString("id-ID", { maximumFractionDigits: 1 })} M`;
-};
-
 const formatProjects = (count: number): string => {
   const safeCount = Number.isFinite(count) ? Math.round(count) : 0;
   return `${safeCount.toLocaleString("id-ID")} projek`;
+};
+
+const computeFullTotals = (segmentLookup: Map<string, SegmentStageRecord>): Map<string, StageTotal> => {
+  const totals = new Map<string, StageTotal>();
+
+  segmentLookup.forEach((stages, segment) => {
+    const totalForSegment = STAGES.reduce<StageTotal>(
+      (acc, stage) => {
+        const stageData = stages[stage];
+        return {
+          value_m: acc.value_m + stageData.value_m,
+          projects: acc.projects + stageData.projects,
+        };
+      },
+      { value_m: 0, projects: 0 },
+    );
+
+    totals.set(segment, totalForSegment);
+  });
+
+  return totals;
 };
 
 /**
@@ -91,9 +111,12 @@ function StageLabel({ stage }: { stage: FunnelStage }) {
  */
 export function FunnelTable({ data, segments, activeSegment }: FunnelTableProps) {
   const segmentLookup = new Map<string, SegmentStageRecord>(
-    data.map((segment) => [normalizeSegment(segment.segment), segment.stages]),
+    data
+      .filter((segment) => isValidSegment(segment.segment))
+      .map((segment) => [normalizeSegment(segment.segment), segment.stages]),
   );
   const activeNormalized = activeSegment ? normalizeSegment(activeSegment) : null;
+  const fullTotals = computeFullTotals(segmentLookup);
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/80 p-1 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
@@ -156,7 +179,7 @@ export function FunnelTable({ data, segments, activeSegment }: FunnelTableProps)
                       isActive && "text-blue-700 dark:text-blue-100",
                     )}
                   >
-                    {formatValueM(stageData.value_m)}
+                    {formatToBillionM(stageData.value_m)}
                   </div>
                   {/* Project count (lighter) */}
                   <div
@@ -172,6 +195,51 @@ export function FunnelTable({ data, segments, activeSegment }: FunnelTableProps)
             })}
           </div>
         ))}
+
+        {/* Full Funnel Total Row */}
+        <div
+          className="grid gap-px bg-slate-50/90 dark:bg-slate-900/60"
+          style={{
+            gridTemplateColumns: `180px repeat(${segments.length}, 1fr)`,
+          }}
+        >
+          <div className="flex items-center justify-center bg-slate-50 px-4 py-4 text-center text-base font-semibold text-slate-900 dark:bg-slate-950/50 dark:text-slate-50">
+            Total Funnel
+          </div>
+
+          {segments.map((segment) => {
+            const normalized = normalizeSegment(segment);
+            const totals = fullTotals.get(normalized) ?? { value_m: 0, projects: 0 };
+            const isActive = activeNormalized === normalized;
+
+            return (
+              <div
+                key={segment}
+                className={cn(
+                  "flex flex-col items-center justify-center bg-slate-50 px-4 py-4 text-center dark:bg-slate-950/50",
+                  isActive && "bg-blue-50/80 ring-1 ring-blue-200/80 dark:bg-blue-500/10 dark:ring-blue-500/30",
+                )}
+              >
+                <div
+                  className={cn(
+                    "text-base font-semibold text-slate-900 dark:text-slate-50",
+                    isActive && "text-blue-700 dark:text-blue-100",
+                  )}
+                >
+                  {formatToBillionM(totals.value_m)}
+                </div>
+                <div
+                  className={cn(
+                    "text-sm font-semibold text-slate-600 dark:text-slate-300",
+                    isActive && "text-blue-600 dark:text-blue-200",
+                  )}
+                >
+                  {formatProjects(totals.projects)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

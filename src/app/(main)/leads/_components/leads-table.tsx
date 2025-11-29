@@ -5,7 +5,7 @@ import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatProjectValue, formatDate } from "@/lib/format-utils";
+import { formatDate, formatToBillionM } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import type { MsdcLead } from "@/types/leads";
 
@@ -91,7 +91,7 @@ export function LeadsTable({ leads, sortField, sortDirection, onSort }: LeadsTab
       <TableBody>
         {leads.map((lead, index) => (
           <TableRow
-            key={lead.lead_id ?? `lead-${index}`}
+            key={lead.lead_id}
             className={cn(
               "border-slate-200/70 dark:border-slate-800/60",
               index % 2 === 0 ? "bg-white/60 dark:bg-slate-900/40" : "bg-white/40 dark:bg-slate-900/25",
@@ -129,7 +129,7 @@ export function LeadsTable({ leads, sortField, sortDirection, onSort }: LeadsTab
                 "-"
               )}
             </TableCell>
-            <TableCell>{formatProjectValue(lead.project_value_m)}</TableCell>
+            <TableCell>{formatToBillionM(lead.project_value_m)}</TableCell>
             <TableCell>
               {lead.status_tender ? (
                 <Badge

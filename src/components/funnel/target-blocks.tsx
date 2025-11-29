@@ -1,7 +1,10 @@
 /* eslint-disable security/detect-object-injection */
 
+import { formatToBillionM } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import type { LopTargetRow } from "@/types/funnel";
+
+import { isValidSegment } from "./segment-utils";
 
 interface TargetBlocksProps {
   targets: LopTargetRow[];
@@ -41,18 +44,15 @@ const normalizeSegment = (segment: string): string => {
   return SEGMENT_NORMALIZATION_MAP[normalized] ?? normalized;
 };
 
-const formatValueM = (value: number): string => {
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return `${safeValue.toLocaleString("id-ID", { maximumFractionDigits: 0 })} M`;
-};
-
 const labelClasses: Record<TargetKind, string> = {
   rkap: "bg-rose-100/60 border-rose-200/70 text-rose-800 dark:bg-rose-500/25 dark:border-rose-500/40 dark:text-rose-50",
   stg: "bg-white/40 border-slate-200/70 text-slate-900 dark:bg-slate-900/40 dark:border-slate-700/70 dark:text-slate-50",
 };
 
 export function TargetBlocks({ targets, segments, activeSegment }: TargetBlocksProps) {
-  const targetLookup = new Map<string, LopTargetRow>(targets.map((row) => [normalizeSegment(row.segment), row]));
+  const targetLookup = new Map<string, LopTargetRow>(
+    targets.filter((row) => isValidSegment(row.segment)).map((row) => [normalizeSegment(row.segment), row]),
+  );
   const activeNormalized = activeSegment ? normalizeSegment(activeSegment) : null;
 
   const getValueForSegment = (segment: string, kind: TargetKind): number => {
@@ -133,7 +133,7 @@ export function TargetBlocks({ targets, segments, activeSegment }: TargetBlocksP
                           isActive && "text-blue-700 dark:text-blue-100",
                         )}
                       >
-                        {formatValueM(getValueForSegment(segment, row.key))}
+                        {formatToBillionM(getValueForSegment(segment, row.key))}
                       </div>
                     </div>
                   );

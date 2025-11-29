@@ -83,10 +83,6 @@ async function getFirstTenantFromDatabase(): Promise<string | null> {
       return null;
     }
 
-    if (!data) {
-      return null;
-    }
-
     return data.id;
   } catch {
     return null;

@@ -1,4 +1,5 @@
 /* eslint-disable unicorn/filename-case */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 "use client";
 
 import { useEffect, useRef } from "react";

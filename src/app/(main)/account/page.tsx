@@ -35,6 +35,7 @@ export default async function AccountPage() {
   }
 
   const { data: profileRow } = await supabase.from("users").select("full_name").eq("id", user.id).maybeSingle();
+  const metadata = user.user_metadata as Record<string, unknown>;
 
   const tenantId =
     process.env.DEFAULT_TENANT_ID ??
@@ -55,11 +56,10 @@ export default async function AccountPage() {
   const { data: membership } = await membershipQuery.maybeSingle();
 
   const initialProfile: ProfileFormValues = {
-    full_name: profileRow?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "",
-    phone: (user.user_metadata?.phone as string | undefined) ?? "",
-    job_title: (user.user_metadata?.job_title as string | undefined) ?? "",
-    division:
-      (membership?.division as Division | null) ?? (user.user_metadata?.division as Division | undefined) ?? "OTHER",
+    full_name: profileRow?.full_name ?? (metadata.full_name as string | undefined) ?? user.email ?? "",
+    phone: (metadata.phone as string | undefined) ?? "",
+    job_title: (metadata.job_title as string | undefined) ?? "",
+    division: (membership?.division as Division | null) ?? (metadata.division as Division | undefined) ?? "OTHER",
   };
 
   const accountInfo: AccountInfo = {

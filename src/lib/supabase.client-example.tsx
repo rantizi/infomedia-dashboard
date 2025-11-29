@@ -34,7 +34,8 @@ export default function DashboardPage() {
         if (err) {
           setError(err.message);
         } else {
-          setCompanies((data ?? []) as CompaniesRow[]);
+          const safeData: CompaniesRow[] = Array.isArray(data) ? (data as CompaniesRow[]) : [];
+          setCompanies(safeData);
         }
       } catch (e) {
         setError(String(e));
@@ -60,14 +61,18 @@ export default function DashboardPage() {
           </tr>
         </thead>
         <tbody>
-          {companies.map((company, idx) => (
-            <tr key={idx}>
-              <td>{idx}</td>
-              <td>
-                <pre>{JSON.stringify(company, null, 2)}</pre>
-              </td>
-            </tr>
-          ))}
+          {companies.map((company) => {
+            const rowKey = company.id;
+
+            return (
+              <tr key={rowKey}>
+                <td>{company.name ?? company.id}</td>
+                <td>
+                  <pre>{JSON.stringify(company, null, 2)}</pre>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

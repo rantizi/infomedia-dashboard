@@ -43,6 +43,34 @@ export function formatProjectValue(value: number | null | undefined): string {
 }
 
 /**
+ * Helper used by charts when the " M" suffix is added elsewhere.
+ * Mirrors `formatToBillionM` but returns the plain formatted number.
+ */
+export function formatMPlain(value_m: number | null | undefined): string {
+  if (value_m === null || value_m === undefined) {
+    return "0";
+  }
+
+  const numericValue = Number(value_m);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return "0";
+  }
+
+  const inBillion = numericValue / 1000;
+
+  if (inBillion >= 1) {
+    const rounded = Math.floor(inBillion);
+    return rounded.toLocaleString("id-ID");
+  }
+
+  const flooredOneDecimal = Math.floor(inBillion * 10) / 10;
+  return flooredOneDecimal.toLocaleString("id-ID", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
+/**
  * Format an ISO datetime string to a readable date
  * Example: "2025-11-18T00:00:00Z" -> "18 Nov 2025"
  */

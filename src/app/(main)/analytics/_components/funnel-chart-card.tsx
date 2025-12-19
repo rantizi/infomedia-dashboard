@@ -1,12 +1,12 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, LabelList, Tooltip, XAxis, YAxis, type TooltipProps } from "recharts";
+import { Bar, BarChart, CartesianGrid, Label, LabelList, Tooltip, XAxis, YAxis, type TooltipProps } from "recharts";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 
 import { AnalyticsEmptyState, AnalyticsErrorState } from "./states";
-import { formatM, formatProjects, sortByStageOrder, stageLabel, type StageKey } from "./utils";
+import { formatM, formatMPlain, formatProjects, sortByStageOrder, stageLabel, type StageKey } from "./utils";
 
 type FunnelChartCardProps = {
   data: {
@@ -85,7 +85,14 @@ export function FunnelChartCard({ data, totalProjects, error }: FunnelChartCardP
                 barCategoryGap={18}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.35)" vertical={false} />
-                <XAxis type="number" tickLine={false} axisLine={false} />
+                <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(value) => formatMPlain(value)}>
+                  <Label
+                    value="Nilai (M)"
+                    position="insideBottomRight"
+                    offset={-6}
+                    className="fill-slate-500 text-[11px]"
+                  />
+                </XAxis>
                 <YAxis
                   dataKey="stage"
                   type="category"

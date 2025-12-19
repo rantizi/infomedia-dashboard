@@ -42,13 +42,6 @@ type QueryResult<T> = {
   errorMessage: string | null;
 };
 
-type AggregatedLopRow = LopRow & {
-  target_rkap_m: number;
-  target_stg_m: number;
-  kecukupan_lop_m: number;
-  qualified_lop_m: number;
-};
-
 const fetchFunnelRows = async (supabase: SupabaseClient, tenantId: string): Promise<QueryResult<FunnelRow>> => {
   const { data, error } = await supabase
     .from("vw_funnel_kpi_per_segment")
@@ -91,7 +84,7 @@ const aggregateLopData = (
   const aggregatedTotalLop =
     perSegmentLop.length === 0
       ? undefined
-      : perSegmentLop.reduce<AggregatedLopRow>(
+      : perSegmentLop.reduce<LopRow>(
           (acc, row) => ({
             ...acc,
             target_rkap_m: acc.target_rkap_m + toNumber(row.target_rkap_m),
@@ -137,7 +130,9 @@ const aggregateLopData = (
   return { perSegmentLop, aggregatedTotalLop, totalSegmentRow };
 };
 
-const aggregateFunnelData = (funnelRows: FunnelRow[]): Pick<AnalyticsData, "totalFunnelByStage" | "totalProjects"> => {
+const aggregateFunnelData = (
+  funnelRows: FunnelRow[],
+): Pick<AnalyticsData, "totalFunnelByStage" | "totalProjects"> => {
   const baseFunnelRows = funnelRows.filter((row) => row.segment && row.segment !== "Total");
   const funnelRowsForAggregation = baseFunnelRows.length > 0 ? baseFunnelRows : funnelRows;
 
@@ -216,11 +211,10 @@ export default async function AnalyticsPage() {
               Analytics
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl leading-tight font-bold text-slate-900 dark:text-slate-50">Analytics {YEAR}</h1>
-              <Badge
-                variant="secondary"
-                className="bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-900/40 dark:text-indigo-100"
-              >
+              <h1 className="text-3xl leading-tight font-bold text-slate-900 dark:text-slate-50">
+                Analytics {YEAR}
+              </h1>
+              <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-900/40 dark:text-indigo-100">
                 STAGE ORDER: {STAGE_ORDER.join(" -> ")}
               </Badge>
             </div>
@@ -267,3 +261,4 @@ export default async function AnalyticsPage() {
     </div>
   );
 }
+

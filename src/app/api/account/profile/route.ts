@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { createServerClient } from "@/lib/supabase";
 import { createServiceClient } from "@/lib/supabaseClient";
+import { getActiveTenantId } from "@/server/server-actions";
 
 // Env vars required: SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
 // DEFAULT_TENANT_ID (or SUPABASE_DEFAULT_TENANT_ID), and APP_BASE_URL if you redirect after auth flows.
@@ -46,10 +47,11 @@ export async function PUT(request: Request) {
     );
   }
 
-  const tenantId =
+  const fallbackTenantId =
     process.env.DEFAULT_TENANT_ID ??
     process.env.SUPABASE_DEFAULT_TENANT_ID ??
     process.env.NEXT_PUBLIC_SUPABASE_DEFAULT_TENANT_ID;
+  const tenantId = (await getActiveTenantId().catch(() => null)) ?? fallbackTenantId;
 
   if (!tenantId) {
     return NextResponse.json(

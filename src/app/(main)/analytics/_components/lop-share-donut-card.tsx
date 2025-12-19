@@ -11,6 +11,7 @@ import { formatM, formatPercent, type LopRow } from "./utils";
 type LopShareDonutCardProps = {
   data: LopRow[];
   totalValue?: number;
+  year: number;
   error?: string | null;
 };
 
@@ -23,7 +24,7 @@ const gradientPalette = [
   ["#0ea5e9", "#6366f1"],
 ];
 
-export function LopShareDonutCard({ data, totalValue, error }: LopShareDonutCardProps) {
+export function LopShareDonutCard({ data, totalValue, year, error }: LopShareDonutCardProps) {
   if (error) {
     return <AnalyticsErrorState message={error} />;
   }
@@ -76,7 +77,7 @@ export function LopShareDonutCard({ data, totalValue, error }: LopShareDonutCard
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-xl font-semibold text-slate-900">LOP Contribution by Segment</CardTitle>
-            <CardDescription>Kontribusi nilai LOP per segmen di tahun 2026.</CardDescription>
+            <CardDescription>Kontribusi nilai LOP per segmen di tahun {year}.</CardDescription>
           </div>
         </div>
       </CardHeader>

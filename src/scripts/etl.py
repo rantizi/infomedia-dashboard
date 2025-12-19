@@ -21,6 +21,7 @@ SHEET_NAME = os.getenv("SHEET_NAME", "").strip() or None
 
 HEADER_ROW_ONE_BASED = int(os.getenv("HEADER_ROW_ONE_BASED", "3"))
 HEADER_INDEX = max(HEADER_ROW_ONE_BASED - 1, 0)
+EST_WIN_YEAR = int(os.getenv("EST_WIN_YEAR", "2026"))
 
 # prioritas sumber untuk dedupe
 SOURCE_PRIORITY = ["BIDDING", "MSDC", "SALES", "MARKETING", "OTHER"]
@@ -181,6 +182,35 @@ df["source_division"] = df["source_division"].apply(normalize_source)
 
 if "est_revenue" in df.columns:
     df["est_revenue"] = df["est_revenue"].apply(parse_money).astype("float64")
+
+# ---- Est Win (mmm) → est_win_month & expected_close_date ----
+MONTH_MAP = {
+    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
+    "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
+    "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
+}
+
+est_col_candidates = [c for c in df.columns if str(c).strip().lower() == "est win (mmm)".lower()]
+
+if est_col_candidates:
+    est_col = est_col_candidates[0]
+
+    # Normalisasi teks ke 3 huruf uppercase
+    raw_est = df[est_col].astype(str).str.strip()
+    abbrev = raw_est.str[:3].str.upper()
+
+    # Simpan bulan (1–12) ke kolom baru est_win_month
+    df["est_win_month"] = abbrev.map(MONTH_MAP).astype("Int64")
+
+    # Optional: bikin tanggal estimasi (pakai tanggal 1 tiap bulan)
+    df["expected_close_date"] = pd.to_datetime(
+        EST_WIN_YEAR.astype(str) + "-" + df["est_win_month"].astype(str) + "-01",
+        errors="coerce",
+    )
+else:
+    # Kalau belum ada kolom Est Win (mmm), tetap definisikan kolom kosong
+    df["est_win_month"] = pd.Series(pd.array([pd.NA] * len(df), dtype="Int64"))
+    df["expected_close_date"] = pd.NaT
 
 for dt_col in ["created_at", "updated_at"]:
     if dt_col in df.columns:

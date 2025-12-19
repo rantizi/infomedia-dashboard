@@ -12,25 +12,15 @@ import {
 } from "@/components/ui/chart";
 
 import { AnalyticsEmptyState, AnalyticsErrorState } from "./states";
-import { formatM, formatPercent, type LopRow } from "./utils";
+import { formatM, formatMPlain, formatPercent, type LopRow } from "./utils";
 
 type LopVsTargetCardProps = {
   data: LopRow[];
+  year: number;
   error?: string | null;
 };
 
-const chartConfig = {
-  target: {
-    label: "Target RKAP",
-    color: "#cbd5e1",
-  },
-  lop: {
-    label: "LOP 2026",
-    color: "#3b82f6",
-  },
-} satisfies ChartConfig;
-
-export function LopVsTargetCard({ data, error }: LopVsTargetCardProps) {
+export function LopVsTargetCard({ data, year, error }: LopVsTargetCardProps) {
   if (error) {
     return <AnalyticsErrorState message={error} />;
   }
@@ -38,6 +28,17 @@ export function LopVsTargetCard({ data, error }: LopVsTargetCardProps) {
   if (data.length === 0) {
     return <AnalyticsEmptyState message="Belum ada data LOP vs target per segmen." />;
   }
+
+  const chartConfig = {
+    target: {
+      label: "Target RKAP",
+      color: "#cbd5e1",
+    },
+    lop: {
+      label: `LOP ${year}`,
+      color: "#3b82f6",
+    },
+  } satisfies ChartConfig;
 
   const chartData = data.map((row) => ({
     segment: row.segment,
@@ -52,7 +53,7 @@ export function LopVsTargetCard({ data, error }: LopVsTargetCardProps) {
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-xl font-semibold text-slate-900">LOP vs Target RKAP per Segment</CardTitle>
-            <CardDescription>Seberapa jauh pipeline memenuhi target RKAP 2026.</CardDescription>
+            <CardDescription>Seberapa jauh pipeline memenuhi target RKAP {year}.</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -69,7 +70,13 @@ export function LopVsTargetCard({ data, error }: LopVsTargetCardProps) {
                 barGap={-12}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.35)" vertical={false} />
-                <XAxis type="number" tickLine={false} axisLine={false} />
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => formatMPlain(value)}
+                  label={{ value: "Nilai (M)", position: "insideBottomRight", offset: -4, fill: "#64748b" }}
+                />
                 <YAxis
                   dataKey="segment"
                   type="category"

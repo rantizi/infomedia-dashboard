@@ -12,6 +12,13 @@ export const runtime = "nodejs";
 const DIVISIONS = ["BIDDING", "MSDC", "SALES", "MARKETING", "OTHER"] as const;
 type SourceDivision = (typeof DIVISIONS)[number];
 type ImportStatus = "QUEUED" | "RUNNING" | "SUCCESS" | "FAILED";
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB guardrail to prevent large uploads from exhausting storage/ETL
+const ALLOWED_EXTENSIONS = new Set(["csv", "xls", "xlsx"]);
+const ALLOWED_MIME_TYPES = new Set([
+  "text/csv",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
 
 type ImportInsert = {
   id: string;
@@ -36,6 +43,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!(fileEntry instanceof File)) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
+    }
+
+    if (fileEntry.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json({ error: "File terlalu besar. Batas maksimum 15MB per unggahan." }, { status: 413 });
     }
 
     if (typeof divisionEntry !== "string" || !isValidDivision(divisionEntry)) {
@@ -65,8 +76,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Generate identifiers and storage path for this import.
     const importId = randomUUID();
     const originalFileName = fileEntry.name || "upload";
+    const extension = getFileExtension(originalFileName);
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      return NextResponse.json(
+        { error: "Format file tidak didukung. Gunakan CSV atau Excel (.xls/.xlsx)." },
+        { status: 400 },
+      );
+    }
+
     const storagePath = buildStoragePath(tenantId, importId, originalFileName);
-    const contentType = fileEntry.type || "application/octet-stream";
+    const contentType = ALLOWED_MIME_TYPES.has(fileEntry.type?.toLowerCase() ?? "")
+      ? fileEntry.type
+      : "application/octet-stream";
 
     // Upload the raw file to Supabase Storage (imports bucket).
     const fileBuffer = Buffer.from(await fileEntry.arrayBuffer());

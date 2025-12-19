@@ -1,67 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createServerClient } from "@/lib/supabase";
+import { createServerClient, createServiceRoleClient } from "@/lib/supabase";
 import { getActiveTenantId } from "@/server/server-actions";
 import type { FunnelApiResponse, FunnelStage, SegmentFunnel } from "@/types/funnel";
 
+const DEFAULT_YEAR = new Date().getFullYear();
 const VIEW_NAME = "vw_funnel_kpi_per_segment";
-const YEAR_COLUMN_CANDIDATES = ["lop_year", "tahun", "year"] as const;
-
-/**
- * GET /api/funnel-2rows
- *
- * Tenant-aware funnel KPI endpoint that reads from `vw_funnel_kpi_per_segment`.
- * Returns grouped metrics per segment and per stage with the following shape:
- *
- * {
- *   data: [
- *     {
- *       segment: "Telkom Group",
- *       stages: {
- *         leads: { value_m: 10.5, projects: 12 },
- *         prospect: { value_m: 8.2, projects: 9 },
- *         qualified: { value_m: 6.1, projects: 7 },
- *         submission: { value_m: 4.8, projects: 5 },
- *         win: { value_m: 2.3, projects: 3 }
- *       }
- *     }
- *   ]
- * }
- *
- * Notes:
- * - `total_m` from the view is already in Millions (M); do NOT scale further.
- * - Query params: `segment` (string, optional), `year` (number, required).
- */
+const STAGE_ORDER: FunnelStage[] = ["leads", "prospect", "qualified", "submission", "win"];
+const SEGMENT_ORDER = ["Telkom Group", "SOE", "Private", "Gov", "SME & Reg"] as const;
 
 type StageCell = SegmentFunnel["stages"][FunnelStage];
+type SegmentKey = (typeof SEGMENT_ORDER)[number];
 
 type RawFunnelRow = {
   segment: string | null;
   stage: string | null;
-  total_m: number | string | null;
   project_count: number | string | null;
-  year?: number | string | null;
-  lop_year?: number | string | null;
-  tahun?: number | string | null;
-  [key: string]: number | string | null | undefined;
+  total_m: number | string | null;
+  year: number | string | null;
+  month: number | string | null;
+  source_division?: string | null;
 };
-
-const STAGE_ORDER: FunnelStage[] = ["leads", "prospect", "qualified", "submission", "win"];
-const DEFAULT_SEGMENT_ORDER = ["telkom group", "soe", "private", "gov", "sme & reg", "total"];
-
-const SEGMENT_NORMALIZATION_MAP = new Map<string, string>([
-  ["telkom", "telkom group"],
-  ["telkom group", "telkom group"],
-  ["soe", "soe"],
-  ["private", "private"],
-  ["government", "gov"],
-  ["gov", "gov"],
-  ["sme & regional", "sme & reg"],
-  ["sme and regional", "sme & reg"],
-  ["sme & reg", "sme & reg"],
-  ["sme reg", "sme & reg"],
-  ["total", "total"],
-]);
+type LeadOpportunityRow = {
+  amount: number | string | null;
+  company: { segment: string | null } | null;
+  created_at: string | null;
+  source_division: string | null;
+};
 
 const STAGE_NORMALIZATION_MAP = new Map<string, FunnelStage>([
   ["leads", "leads"],
@@ -75,18 +40,29 @@ const STAGE_NORMALIZATION_MAP = new Map<string, FunnelStage>([
   ["won", "win"],
 ]);
 
+const SEGMENT_NORMALIZATION_MAP = new Map<string, SegmentKey>([
+  ["telkom", "Telkom Group"],
+  ["telkom group", "Telkom Group"],
+  ["soe", "SOE"],
+  ["private", "Private"],
+  ["government", "Gov"],
+  ["gov", "Gov"],
+  ["sme & reg", "SME & Reg"],
+  ["sme & regional", "SME & Reg"],
+  ["sme and regional", "SME & Reg"],
+  ["sme reg", "SME & Reg"],
+]);
+
 const normalizeStage = (stage: string | null): FunnelStage | null => {
   const normalized = (stage ?? "").trim().toLowerCase();
   return STAGE_NORMALIZATION_MAP.get(normalized) ?? null;
 };
 
-const normalizeSegment = (segment: string): string => {
+const normalizeSegment = (segment: string | null): SegmentKey | null => {
+  if (!segment) return null;
   const normalized = segment.trim().toLowerCase();
-  return SEGMENT_NORMALIZATION_MAP.get(normalized) ?? normalized;
+  return SEGMENT_NORMALIZATION_MAP.get(normalized) ?? null;
 };
-
-const isMissingColumn = (errorMessage: string, columnName: string): boolean =>
-  errorMessage.toLowerCase().includes(columnName.toLowerCase());
 
 const toNumber = (value: number | string | null | undefined): number => {
   if (value === null || value === undefined) return 0;
@@ -100,146 +76,99 @@ const createEmptyStageRecord = (): Record<FunnelStage, StageCell> =>
     StageCell
   >;
 
-function sortSegments(segments: SegmentFunnel[]): SegmentFunnel[] {
-  const rank = (segment: string): number => {
-    const idx = DEFAULT_SEGMENT_ORDER.indexOf(normalizeSegment(segment));
-    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
-  };
-
-  return [...segments].sort((a, b) => {
-    const rankDiff = rank(a.segment) - rank(b.segment);
-    if (rankDiff !== 0) return rankDiff;
-    return a.segment.localeCompare(b.segment);
-  });
-}
-
-function parseRowYear(row: RawFunnelRow, yearKey: string): number | undefined {
-  const rawYear = (row as Record<string, number | string | null | undefined>)[yearKey];
-  if (rawYear === undefined || rawYear === null) return undefined;
-  const parsed = Number(rawYear);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function groupFunnelRows(rows: RawFunnelRow[], fallbackYear?: number, yearKey = "year"): SegmentFunnel[] {
-  const grouped = new Map<string, SegmentFunnel>();
-
-  for (const row of rows) {
-    const segmentLabel = row.segment?.trim();
-    if (!segmentLabel) continue;
-
-    const stage = normalizeStage(row.stage);
-    if (!stage) continue;
-
-    const key = normalizeSegment(segmentLabel);
-    const existing = grouped.get(key) ?? {
-      segment: segmentLabel,
-      stages: createEmptyStageRecord(),
-      ...(fallbackYear !== undefined ? { year: fallbackYear } : {}),
-    };
-    grouped.set(key, existing);
-
-    existing.stages[stage] = {
-      value_m: toNumber(row.total_m),
-      projects: Math.round(toNumber(row.project_count)),
-    };
-
-    const parsedYear = parseRowYear(row, yearKey);
-    if (parsedYear !== undefined) {
-      existing.year = parsedYear;
-    }
-  }
-
-  return sortSegments(Array.from(grouped.values()));
-}
-
 const parseYearParam = (value: string | null): number | null => {
   if (!value) return null;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-async function getLatestTargetYear(supabase: Awaited<ReturnType<typeof createServerClient>>, tenantId: string) {
-  const { data, error } = await supabase
-    .from("vw_lop_vs_target_per_segment")
-    .select("year")
-    .eq("tenant_id", tenantId)
-    .order("year", { ascending: false })
-    .limit(1);
+const parseMonthParam = (value: string | null): { value: number | null; invalid: boolean } => {
+  if (value === null) return { value: null, invalid: false };
+  const lower = value.trim().toLowerCase();
+  if (lower === "" || lower === "all") return { value: null, invalid: false };
+  const parsed = Number.parseInt(lower, 10);
+  if (!Number.isFinite(parsed)) return { value: null, invalid: true };
+  if (parsed < 1 || parsed > 12) return { value: null, invalid: true };
+  return { value: parsed, invalid: false };
+};
 
-  if (error) return null;
-
-  const candidate = data?.[0]?.year;
-  const parsed = candidate !== null && candidate !== undefined ? Number(candidate) : null;
-  return Number.isFinite(parsed) ? (parsed as number) : null;
-}
-
-async function resolveYearColumn(
-  supabase: Awaited<ReturnType<typeof createServerClient>>,
-  tenantId: string,
-): Promise<{ column: string | null; latestYear: number | null }> {
-  for (const candidate of YEAR_COLUMN_CANDIDATES) {
-    const { data, error } = (await supabase
-      .from(VIEW_NAME)
-      .select(candidate)
-      .eq("tenant_id", tenantId)
-      .not(candidate, "is", null)
-      .order(candidate, { ascending: false })
-      .limit(1)) as { data: Record<string, unknown>[] | null; error: { message: string } | null };
-
-    if (error) {
-      if (isMissingColumn(error.message, candidate)) continue;
-      throw new Error(error.message);
+function ensureAllSegments(grouped: Map<string, SegmentFunnel>, year: number): SegmentFunnel[] {
+  SEGMENT_ORDER.forEach((segment) => {
+    if (!grouped.has(segment)) {
+      grouped.set(segment, { segment, stages: createEmptyStageRecord(), year });
     }
+  });
 
-    if (!data || data.length === 0) continue;
+  const rank = (segment: string): number => {
+    const idx = SEGMENT_ORDER.indexOf(segment as SegmentKey);
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  };
 
-    const value = data[0][candidate as keyof (typeof data)[number]] as number | string | null | undefined;
-    const parsed = value !== null && value !== undefined ? Number(value) : null;
-    if (Number.isFinite(parsed)) {
-      return { column: candidate, latestYear: parsed as number };
-    }
-  }
-
-  return { column: null, latestYear: null };
+  return Array.from(grouped.values()).sort((a, b) => {
+    const diff = rank(a.segment) - rank(b.segment);
+    return diff !== 0 ? diff : a.segment.localeCompare(b.segment);
+  });
 }
 
 // eslint-disable-next-line complexity
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const searchParams = request.nextUrl.searchParams;
-  const segmentFilter = searchParams.get("segment")?.trim() ?? undefined;
   const yearParamRaw = searchParams.get("year");
+  const monthFromParam = searchParams.get("monthFrom");
+  const monthToParam = searchParams.get("monthTo");
+  const debugRequested = searchParams.get("debug") === "1";
+  const debugEnabled = debugRequested && process.env.NODE_ENV !== "production";
+
   const requestedYear = parseYearParam(yearParamRaw);
   const hasYearParam = yearParamRaw !== null;
-
   if (hasYearParam && requestedYear === null) {
     return NextResponse.json({ error: "Parameter 'year' wajib berupa angka." }, { status: 400 });
+  }
+
+  const parsedMonthFrom = parseMonthParam(monthFromParam);
+  const parsedMonthTo = parseMonthParam(monthToParam);
+
+  if (parsedMonthFrom.invalid || parsedMonthTo.invalid) {
+    return NextResponse.json(
+      { error: "Parameter 'monthFrom' dan 'monthTo' harus berupa angka 1-12 atau dikosongkan." },
+      { status: 400 },
+    );
+  }
+
+  let monthFrom = parsedMonthFrom.value;
+  let monthTo = parsedMonthTo.value;
+
+  if (monthFrom !== null && monthTo === null) {
+    monthTo = monthFrom;
+  } else if (monthTo !== null && monthFrom === null) {
+    monthFrom = monthTo;
+  }
+
+  if (monthFrom !== null && monthTo !== null && monthFrom > monthTo) {
+    [monthFrom, monthTo] = [monthTo, monthFrom];
+  }
+
+  const effectiveYear = requestedYear ?? DEFAULT_YEAR;
+  if (!Number.isFinite(effectiveYear)) {
+    return NextResponse.json({ error: "Parameter 'year' tidak valid." }, { status: 400 });
   }
 
   try {
     const tenantId = await getActiveTenantId();
     const supabase = await createServerClient();
-    const { column: yearColumn, latestYear: viewLatestYear } = await resolveYearColumn(supabase, tenantId);
-    const targetLatestYear = viewLatestYear ?? (await getLatestTargetYear(supabase, tenantId));
-    const effectiveYear = requestedYear ?? targetLatestYear ?? new Date().getFullYear();
+    const serviceSupabase = process.env.SUPABASE_SERVICE_ROLE_KEY !== undefined ? createServiceRoleClient() : null;
 
-    if (!Number.isFinite(effectiveYear)) {
-      return NextResponse.json({ error: "Parameter 'year' tidak valid." }, { status: 400 });
+    let query = supabase
+      .from(VIEW_NAME)
+      .select("segment, stage, project_count, total_m, year, month")
+      .eq("tenant_id", tenantId)
+      .eq("year", effectiveYear);
+
+    if (monthFrom !== null && monthTo !== null) {
+      query = query.gte("month", monthFrom).lte("month", monthTo);
     }
 
-    let query =
-      yearColumn !== null
-        ? supabase
-            .from(VIEW_NAME)
-            .select(`segment, stage, total_m, project_count, ${yearColumn}`)
-            .eq("tenant_id", tenantId)
-            .eq(yearColumn, effectiveYear)
-        : supabase.from(VIEW_NAME).select("segment, stage, total_m, project_count").eq("tenant_id", tenantId);
-
-    if (segmentFilter) {
-      query = query.ilike("segment", segmentFilter);
-    }
-
-    const { data, error } = (await query.order("segment", { ascending: true }).order("stage", { ascending: true })) as {
+    const { data: rows, error } = (await query.order("segment").order("stage")) as {
       data: RawFunnelRow[] | null;
       error: { message: string } | null;
     };
@@ -248,24 +177,107 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       throw new Error(error.message);
     }
 
-    const shouldDropData =
-      yearColumn === null && requestedYear !== null && targetLatestYear !== null && requestedYear !== targetLatestYear;
-    const effectiveRows = shouldDropData ? [] : (data ?? []);
-    const grouped = groupFunnelRows(effectiveRows, effectiveYear, yearColumn ?? "year");
-
-    console.log(
-      `[/api/funnel-2rows] requestedYear=${requestedYear ?? "auto"} effectiveYear=${effectiveYear} column=${
-        yearColumn ?? "n/a"
-      }`,
-    );
-    console.log(
-      `[/api/funnel-2rows] rawRows=${effectiveRows.length} groupedRows=${grouped.length} (tenant=${tenantId})`,
+    const baseRows = rows ?? [];
+    const leadsProjectsFromView = baseRows.reduce(
+      (sum, row) => (normalizeStage(row.stage) === "leads" ? sum + Math.round(toNumber(row.project_count)) : sum),
+      0,
     );
 
-    return NextResponse.json<FunnelApiResponse>(
-      { rows: grouped, data: grouped, hasData: grouped.length > 0, year: effectiveYear },
-      { status: 200 },
-    );
+    let leadSourceRows: LeadOpportunityRow[] | null = null;
+    let augmentedRows: RawFunnelRow[] = baseRows;
+
+    if (leadsProjectsFromView === 0 && serviceSupabase) {
+      const startDateIso = new Date(Date.UTC(effectiveYear, (monthFrom ?? 1) - 1, 1)).toISOString();
+      const endDateIso = new Date(Date.UTC(effectiveYear, monthTo ?? 12, 1)).toISOString();
+
+      const { data: leadRows, error: leadsError } = await serviceSupabase
+        .from("opportunities")
+        .select("stage, amount, created_at, source_division, company:companies(segment)")
+        .eq("tenant_id", tenantId)
+        .eq("stage", "leads")
+        .gte("created_at", startDateIso)
+        .lt("created_at", endDateIso);
+
+      if (leadsError) {
+        console.error("[/api/funnel-2rows] Failed to backfill leads:", leadsError.message);
+      } else if (leadRows) {
+        leadSourceRows = leadRows as LeadOpportunityRow[];
+        const mappedLeadRows: RawFunnelRow[] = leadRows.map((row) => ({
+          segment: row.company?.segment ?? null,
+          stage: "leads",
+          project_count: 1,
+          total_m: toNumber(row.amount) / 1_000_000,
+          year: effectiveYear,
+          month: row.created_at ? new Date(row.created_at).getUTCMonth() + 1 : null,
+          source_division: row.source_division ?? null,
+        }));
+        augmentedRows = [...augmentedRows, ...mappedLeadRows];
+      }
+    }
+
+    const grouped = new Map<string, SegmentFunnel>();
+
+    for (const row of augmentedRows) {
+      const segment = normalizeSegment(row.segment);
+      const stage = normalizeStage(row.stage);
+      if (!segment || !stage) continue;
+
+      const existing = grouped.get(segment) ?? { segment, stages: createEmptyStageRecord(), year: effectiveYear };
+      const currentStage = existing.stages[stage];
+
+      existing.stages[stage] = {
+        value_m: currentStage.value_m + toNumber(row.total_m),
+        projects: currentStage.projects + Math.round(toNumber(row.project_count)),
+      };
+
+      grouped.set(segment, existing);
+    }
+
+    const result = ensureAllSegments(grouped, effectiveYear);
+
+    console.log("[funnel-2rows] params", { year: effectiveYear, monthFrom, monthToNormalized: monthTo });
+    console.log("[funnel-2rows] rowsFromDb", augmentedRows.length);
+
+    const payload: FunnelApiResponse & { debug?: unknown } = {
+      rows: result,
+      data: result,
+      hasData: result.length > 0,
+      year: effectiveYear,
+    };
+
+    if (debugEnabled) {
+      const distinctStages = new Set<string>();
+      const distinctDivisions = new Set<string>();
+      augmentedRows.forEach((row) => {
+        const normalizedStage = normalizeStage(row.stage);
+        if (normalizedStage) distinctStages.add(normalizedStage);
+        if (row.source_division) distinctDivisions.add(row.source_division);
+      });
+
+      const leadRowsForDebug = augmentedRows.filter((row) => normalizeStage(row.stage) === "leads");
+      const leadCount = leadRowsForDebug.reduce((sum, row) => sum + Math.round(toNumber(row.project_count)), 0);
+      const leadStats =
+        leadSourceRows !== null
+          ? {
+              total_rows: leadSourceRows.length,
+              rows_with_amount: leadSourceRows.filter((row) => row?.amount !== null).length,
+              sum_amount: leadSourceRows.reduce((sum, row) => sum + toNumber(row?.amount), 0),
+            }
+          : {
+              total_rows: leadRowsForDebug.length,
+              rows_with_amount: leadRowsForDebug.filter((row) => toNumber(row.total_m) > 0).length,
+              sum_amount: leadRowsForDebug.reduce((sum, row) => sum + toNumber(row.total_m) * 1_000_000, 0),
+            };
+
+      payload.debug = {
+        filters: { year: effectiveYear, monthFrom, monthTo, stages: STAGE_ORDER, division: "all" },
+        distinctStages: Array.from(distinctStages),
+        distinctDivisions: Array.from(distinctDivisions),
+        leads: { ...leadStats, leads_count: leadCount },
+      };
+    }
+
+    return NextResponse.json<FunnelApiResponse>(payload, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
     console.error("[/api/funnel-2rows] Failed to fetch funnel data:", message);

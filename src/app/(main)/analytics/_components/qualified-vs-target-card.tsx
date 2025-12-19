@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 
 import { AnalyticsEmptyState, AnalyticsErrorState } from "./states";
-import { formatM, formatPercent, type LopRow } from "./utils";
+import { formatM, formatMPlain, formatPercent, type LopRow } from "./utils";
 
 type QualifiedVsTargetCardProps = {
   data: LopRow[];
@@ -88,7 +88,8 @@ export function QualifiedVsTargetCard({ data, error }: QualifiedVsTargetCardProp
                   domain={xDomain}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => value.toLocaleString("id-ID")}
+                  tickFormatter={(value) => formatMPlain(value)}
+                  label={{ value: "Nilai (M)", position: "insideBottomRight", offset: -6, fill: "#64748b" }}
                 />
                 <YAxis
                   dataKey="segment"

@@ -7,6 +7,7 @@ import { formatM, formatPercent, type LopRow } from "./utils";
 
 type AnalyticsKpiGridProps = {
   totalRow?: LopRow;
+  year: number;
 };
 
 const gradientClasses = [
@@ -16,18 +17,18 @@ const gradientClasses = [
   "from-fuchsia-500/15 via-purple-500/10 to-indigo-400/15",
 ];
 
-export function AnalyticsKpiGrid({ totalRow }: AnalyticsKpiGridProps) {
+export function AnalyticsKpiGrid({ totalRow, year }: AnalyticsKpiGridProps) {
   const kpiItems = [
     {
-      title: "Total LOP 2026",
+      title: `Total LOP ${year}`,
       value: totalRow ? formatM(totalRow.kecukupan_lop_m ?? 0) : "--",
       subtitle: "Total pipeline (all stages)",
       icon: Activity,
     },
     {
-      title: "Target RKAP 2026",
+      title: `Target RKAP ${year}`,
       value: totalRow ? formatM(totalRow.target_rkap_m ?? 0) : "--",
-      subtitle: "Target RKAP 2026",
+      subtitle: `Target RKAP ${year}`,
       icon: Target,
     },
     {
@@ -39,7 +40,7 @@ export function AnalyticsKpiGrid({ totalRow }: AnalyticsKpiGridProps) {
     {
       title: "Kecukupan vs RKAP",
       value: totalRow ? formatPercent(totalRow.kecukupan_vs_rkap_pct ?? 0) : "--",
-      subtitle: "LOP vs RKAP 2026",
+      subtitle: `LOP vs RKAP ${year}`,
       icon: TrendingUp,
     },
   ];
@@ -56,7 +57,7 @@ export function AnalyticsKpiGrid({ totalRow }: AnalyticsKpiGridProps) {
             <CardContent className="relative space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold tracking-[0.22em] text-slate-600 uppercase">Nilai 2026</p>
+                  <p className="text-[11px] font-semibold tracking-[0.22em] text-slate-600 uppercase">Nilai {year}</p>
                   <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className="text-xs text-slate-600">{item.subtitle}</p>
                 </div>
@@ -67,7 +68,7 @@ export function AnalyticsKpiGrid({ totalRow }: AnalyticsKpiGridProps) {
               <div className="space-y-2">
                 <div className="text-3xl font-semibold tracking-tight text-slate-900">{item.value}</div>
                 <Badge variant="secondary" className="bg-white/70 text-indigo-700 shadow-sm">
-                  Menggunakan Nilai 2026
+                  Menggunakan Nilai {year}
                 </Badge>
               </div>
             </CardContent>

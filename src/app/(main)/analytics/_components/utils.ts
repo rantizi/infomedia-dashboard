@@ -1,3 +1,5 @@
+import { formatMPlain as formatMPlainFromLib, formatToBillionM } from "@/lib/format-utils";
+
 export const STAGE_ORDER = ["leads", "prospect", "qualified", "submission", "win"] as const;
 
 export type StageKey = (typeof STAGE_ORDER)[number];
@@ -22,10 +24,9 @@ export type LopRow = {
   qualified_vs_stg_pct: number | null;
 };
 
-export const formatM = (value: number): string => {
-  const formatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
-  return `${formatter.format(value)} M`;
-};
+export const formatM = (value: number | null | undefined): string => formatToBillionM(value);
+
+export const formatMPlain = (value: number | null | undefined): string => formatMPlainFromLib(value);
 
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
